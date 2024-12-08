@@ -1,1 +1,1 @@
-# api-buy-tech
+# API do projeto - [BUY TECH](https://github.com/davidsousadev/buy-tech)
