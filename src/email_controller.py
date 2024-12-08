@@ -20,10 +20,9 @@ def enviar_email_base(envio_email: EmailDados):
         corpo = envio_email.corpo,
         key = envio_email.key
         )
-    
-    
+
     if KEY_POST_EMAIL==envio_email.key:
-        enviar_email(
+        envio = enviar_email(
             email.nome_remetente, 
             email.remetente, 
             email.senha, 
@@ -32,7 +31,8 @@ def enviar_email_base(envio_email: EmailDados):
             email.corpo, 
             importante = True,
             html = True)
-        return {}
+        if envio:
+            return {"message": "E-mail enviado com sucesso!"}
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Erro ao enviar e-mail"
