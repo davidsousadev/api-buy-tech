@@ -3,4 +3,5 @@ venv
 .venv
 __pycache__
 teste
+teste/*
 banco_emails.db
