@@ -24,6 +24,8 @@
     EMAIL=
     KEY_EMAIL=
     KEY_POST_EMAIL=
+    SECRET_KEY= 
+    ALGORITHM= 
 ```
 
 ## Roda o projeto
