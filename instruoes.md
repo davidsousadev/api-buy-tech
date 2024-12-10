@@ -6,11 +6,16 @@
     python3 -m venv venv
     source venv/bin/activate
 ```
+## Atualizando pip
+
+```sh
+    pip3 install --upgrade pip
+```
 
 ## Instalação das dependençias
 
 ```sh
-    pip install -r requirements.txt
+    pip3 install -r requirements.txt
 ```
 
 ## Roda o projeto

@@ -1,5 +1,6 @@
 annotated-types==0.7.0
 anyio==4.7.0
+bcrypt==4.2.1
 certifi==2024.8.30
 click==8.1.7
 davidsousa==0.3.0
@@ -17,9 +18,11 @@ Jinja2==3.1.4
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 mdurl==0.1.2
+passlib==1.7.4
 pydantic==2.10.3
 pydantic_core==2.27.1
 Pygments==2.18.0
+PyJWT==2.10.1
 python-decouple==3.8
 python-dotenv==1.0.1
 python-multipart==0.0.19
