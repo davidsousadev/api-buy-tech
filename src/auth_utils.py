@@ -1,4 +1,3 @@
-from turtle import st
 from typing import Annotated
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
