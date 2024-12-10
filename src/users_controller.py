@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-
+from decouple import config
 from src.auth_utils import get_logged_user
 from src.database import get_engine
 from src.models import BaseUser, SignInUserRequest, SignUpUserRequest, User
@@ -11,10 +11,11 @@ import jwt
 
 router = APIRouter()
 
-SECRET_KEY = '02a7e6efa2d0f77fc89f1f44d73acd7bf26e5dc6f3c1f939ff5d038ea3604f23'
-ALGORITHM = 'HS256'
+SECRET_KEY = config('SECRET_KEY')
+ALGORITHM = config('ALGORITHM')
 ACCESS_TOKEN_EXPIRE_MINUTES = 10
-REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 3 # Vale 3 dias
+REFRESH_TOKEN_EXPIRE_MINUTES = 60 * 24 * 3
+
 
 @router.post('/signup', response_model=BaseUser)
 def signup(user_data: SignUpUserRequest):
@@ -45,14 +46,14 @@ def signin(signin_data: SignInUserRequest):
     
     sttm = select(User).where(User.username == signin_data.username)
     user = session.exec(sttm).first()
-    print('1: ', user)
+    #print('1: ', user)
     if not user: # não encontrou usuário
       raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
         detail='Usuário e/ou senha incorreto(S)')
     
     # encontrou, então verificar a senha
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-    print('2: ', user)
+    #print('2: ', user)
     is_correct = pwd_context.verify(signin_data.password, user.password)
 
     if not is_correct:
@@ -69,7 +70,6 @@ def signin(signin_data: SignInUserRequest):
 
 
     return {'access_token': access_token, 'refresh_token': refresh_token}
-
 
 @router.get('/me', response_model=BaseUser)
 def me(user: Annotated[User, Depends(get_logged_user)]):

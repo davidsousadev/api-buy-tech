@@ -15,8 +15,10 @@ app.add_middleware(
 )
 
 app.include_router(email_router, 
-                   prefix='/email', tags=["E-mail"])
+                   prefix='/email', 
+                   tags=["E-mail"])
 
-app.include_router(router=user_router)
+app.include_router(router=user_router,
+                   tags=["Users"])
 
 init_db()
