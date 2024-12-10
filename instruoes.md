@@ -18,6 +18,14 @@
     pip3 install -r requirements.txt
 ```
 
+## ADD .env
+
+```
+    EMAIL=
+    KEY_EMAIL=
+    KEY_POST_EMAIL=
+```
+
 ## Roda o projeto
 
 ```sh

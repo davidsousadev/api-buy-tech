@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from .email_controller import router as email_router
 from fastapi.middleware.cors import CORSMiddleware
+from .users_controller import router as user_router
+from .database import init_db
 
 app = FastAPI()
 
@@ -14,3 +16,7 @@ app.add_middleware(
 
 app.include_router(email_router, 
                    prefix='/email', tags=["E-mail"])
+
+app.include_router(router=user_router)
+
+init_db()

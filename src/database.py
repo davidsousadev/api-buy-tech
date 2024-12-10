@@ -1,4 +1,4 @@
-from sqlmodel import create_engine
+from sqlmodel import create_engine, SQLModel
 from decouple import config
 
 def get_engine():
@@ -14,3 +14,7 @@ def get_engine():
   #return create_engine(f'postgresql://{user}:{password}@{host}:{port}/{db_name}')
 
   return create_engine('sqlite:///banco_emails.db')
+
+
+def init_db():
+  SQLModel.metadata.create_all(get_engine())
