@@ -24,7 +24,6 @@ class User(BaseUser, table=True):
   pontos_fidelidade: int
   clube_fidelidade: bool
   link_indicacao: str
-  
 class SignUpUserRequest(BaseUser):       
   cpf: int
   telefone: str       

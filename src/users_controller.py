@@ -36,7 +36,7 @@ def signup(user_data: SignUpUserRequest, ref: str | None = None):
   
   # Hash da senha
   hash = hash_password(user_data.password)
-  link = None
+  link = ""
   if ref != None:
     link = ref
     
