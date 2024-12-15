@@ -18,17 +18,24 @@ class BaseUser(SQLModel):
   email: str
   username: str
   
-
 class User(BaseUser, table=True):
   id: int = Field(default=None, primary_key=True)
   password: str
-
-
-class SignUpUserRequest(BaseUser):
+  pontos_fidelidade: int
+  clube_fidelidade: bool
+  link_indicacao: str
+  
+class SignUpUserRequest(BaseUser):       
+  cpf: int
+  telefone: str       
+  endereco: str       
   password: str
   confirm_password: str
-
 
 class SignInUserRequest(SQLModel):
   username: str
   password: str
+  
+class UserData(BaseUser):
+  pontos_fidelidade: int
+  clube_fidelidade: bool
