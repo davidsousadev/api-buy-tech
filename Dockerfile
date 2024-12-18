@@ -1,19 +1,20 @@
-# 1. Maquina com Python
+# 1. Máquina base com Python
 FROM python:3.11.6-slim-bullseye
 
-# 2. Copy arquivos
+# 2. Definir diretório de trabalho
 WORKDIR /home/app
+
+# 3. Copiar dependências primeiro para otimizar o cache
 COPY ./requirements.txt .
 
-# 3. Instalar as Dependencias
-RUN pip install -r requirements.txt
+# 4. Instalar as dependências
+RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. Copy arquivos
+# 5. Copiar o restante dos arquivos do projeto
 COPY . .
 
-# 4. Expor Porta
+# 6. Expor a porta do container
 EXPOSE 8000
 
-# 5. Rodar a aplicação
-# CMD [ "fastapi", "dev", "src/main.py" ]
-CMD python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+# 7. Rodar a aplicação
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
