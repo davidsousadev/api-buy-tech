@@ -1,0 +1,519 @@
+{
+    "info": {
+        "_postman_id": "0e783af3-ed48-48d5-8868-80bf21a9c33c",
+        "name": "Api Buy Tech",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": ""
+    },
+    "item": [
+        {
+            "name": "Envio de Email",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/email",
+                    "path": [
+                        "email"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"destinatario\": \"davidk1k3k@gmail.com\",\n  \"assunto\": \"string\",\n  \"corpo\": \"string\",\n  \"key\": \"buytech\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Cadastrar Usuarios",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/usuarios/cadastrar",
+                    "path": [
+                        "usuarios",
+                        "cadastrar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\",\n  \"confirm_password\": \"string\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Logar Usuarios",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/usuarios/logar",
+                    "path": [
+                        "usuarios",
+                        "logar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Autenticar Usuarios",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/usuarios/autenticar",
+                    "path": [
+                        "usuarios",
+                        "autenticar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA1NTJ9.00v7MWXZksgOlnaLXE8wfIFW1xjufUzY7iFEDsUAoWs",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Atualizar usuarios por Id",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/usuarios/atualizar/1",
+                    "path": [
+                        "usuarios",
+                        "atualizar",
+                        "1"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string2\",\n  \"cep\": 0,\n  \"password\": \"string\"\n}"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA1NTJ9.00v7MWXZksgOlnaLXE8wfIFW1xjufUzY7iFEDsUAoWs",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Cadastrar Administrador",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/cadastrar?ref=0",
+                    "query": [
+                        {
+                            "key": "ref",
+                            "value": "0"
+                        }
+                    ],
+                    "variable": [],
+                    "path": [
+                        "admins",
+                        "cadastrar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\",\n  \"confirm_password\": \"string\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Logar Administrador",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/logar",
+                    "path": [
+                        "admins",
+                        "logar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}"
+                }
+            }
+        },
+        {
+            "name": "Autenticar Administrador",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/autenticar",
+                    "path": [
+                        "admins",
+                        "autenticar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Atualizar administrador por id",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/atualizar/1",
+                    "path": [
+                        "admins",
+                        "atualizar",
+                        "1"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\"\n}"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Listar admins",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins",
+                    "path": [
+                        "admins"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Desativar Administradores por id",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/desativar/1",
+                    "path": [
+                        "admins",
+                        "desativar",
+                        "1"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Cadastrar usuarios",
+            "request": {
+                "method": "POST",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/usuarios/cadastrar",
+                    "path": [
+                        "admins",
+                        "usuarios",
+                        "cadastrar"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\",\n  \"confirm_password\": \"string\"\n}"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Listar Usuarios",
+            "request": {
+                "method": "GET",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/usuarios",
+                    "path": [
+                        "admins",
+                        "usuarios"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Atualizar Usuario",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/usuarios/atualizar/1",
+                    "path": [
+                        "admins",
+                        "usuarios",
+                        "atualizar",
+                        "1"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "body": {
+                    "mode": "raw",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    },
+                    "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\"\n}"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "name": "Desativar Usuarios por id",
+            "request": {
+                "method": "PATCH",
+                "url": {
+                    "raw": "http://127.0.0.1:8000/admins/usuarios/desativar/1",
+                    "path": [
+                        "admins",
+                        "usuarios",
+                        "desativar",
+                        "1"
+                    ],
+                    "protocol": "http",
+                    "host": [
+                        "127",
+                        "0",
+                        "0",
+                        "1"
+                    ],
+                    "port": "8000"
+                },
+                "auth": {
+                    "type": "bearer",
+                    "bearer": [
+                        {
+                            "key": "token",
+                            "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM",
+                            "type": "string"
+                        }
+                    ]
+                }
+            }
+        }
+    ]
+}

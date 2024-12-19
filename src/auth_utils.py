@@ -8,12 +8,13 @@ from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from sqlmodel import Session, select
 from decouple import config
 from src.database import get_engine
-from src.models import User
+from src.models.user_models import User
+from src.models.admin_models import Admin
 
 SECRET_KEY = config('SECRET_KEY')
 ALGORITHM = config('ALGORITHM')
-ACCESS_EXPIRES = config('ACCESS_EXPIRES')
-REFRESH_EXPIRES = config('REFRESH_EXPIRES')
+ACCESS_EXPIRES=10 
+REFRESH_EXPIRES=60*24*3 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
 
@@ -26,19 +27,47 @@ async def get_logged_user(token: Annotated[str, Depends(oauth2_scheme)]):
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-        username = payload.get('sub')
+        email = payload.get('sub')
 
-        if not username: 
+        if not email: 
             raise exception
 
         with Session(get_engine()) as session:
-            sttm = select(User).where(User.username == username)
+            sttm = select(User).where(User.email == email)
             user = session.exec(sttm).first()
 
             if not user:
                 raise exception
 
             return user
+
+    except ExpiredSignatureError:
+        raise expired_exception  # Token expirado
+    except InvalidTokenError:
+        raise invalid_exception  # Token inválido
+
+async def get_logged_admin(token: Annotated[str, Depends(oauth2_scheme)]):
+    # Vai pegar o Token na Request, se válido
+    # pegará o usuário no BD para confirmar e retornar ele
+    exception = HTTPException(status_code=401, detail='Não autorizado!')
+    invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
+    expired_exception = HTTPException(status_code=401, detail='Token expirado!')
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+        email = payload.get('sub')
+
+        if not email: 
+            raise exception
+
+        with Session(get_engine()) as session:
+            sttm = select(Admin).where(Admin.email == email)
+            admin = session.exec(sttm).first()
+
+            if not admin:
+                raise exception
+
+            return admin
 
     except ExpiredSignatureError:
         raise expired_exception  # Token expirado

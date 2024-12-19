@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, HTTPException
 from decouple import config
 from davidsousa import enviar_email
-from src.models import Email, EmailDados
+from src.models.email_models import Email, EmailDados
 
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
@@ -10,7 +10,7 @@ KEY_POST_EMAIL= config('KEY_POST_EMAIL')
 router = APIRouter()
 
 @router.post('', status_code=status.HTTP_201_CREATED)
-def enviar_email_base(envio_email: EmailDados):
+def enviar_email_default(envio_email: EmailDados):
     email = Email(
         nome_remetente = "Buy Tech",
         remetente = EMAIL,

@@ -1,0 +1,283 @@
+{
+    "clientName": "Thunder Client",
+    "collectionName": "Api Buy Tech",
+    "collectionId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+    "dateExported": "2024-12-19T20:30:32.278Z",
+    "version": "1.2",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "dfe1c786-d7b4-46d8-97a8-baf646c0eff8",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Envio de Email",
+            "url": "http://127.0.0.1:8000/email",
+            "method": "POST",
+            "sortNum": 10000,
+            "created": "2024-12-19T20:23:49.426Z",
+            "modified": "2024-12-19T20:25:10.955Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"destinatario\": \"davidk1k3k@gmail.com\",\n  \"assunto\": \"string\",\n  \"corpo\": \"string\",\n  \"key\": \"buytech\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "4f59572a-ffa7-498c-b3ff-683731b4cd38",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Cadastrar Usuarios",
+            "url": "http://127.0.0.1:8000/usuarios/cadastrar",
+            "method": "POST",
+            "sortNum": 20000,
+            "created": "2024-12-19T20:23:49.427Z",
+            "modified": "2024-12-19T20:23:49.427Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\",\n  \"confirm_password\": \"string\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "613c4350-1711-407d-a943-f0fe478e5f93",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Logar Usuarios",
+            "url": "http://127.0.0.1:8000/usuarios/logar",
+            "method": "POST",
+            "sortNum": 30000,
+            "created": "2024-12-19T20:23:49.428Z",
+            "modified": "2024-12-19T20:23:49.428Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "56f700a1-a48f-4ff7-b847-c70849c4140f",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Autenticar Usuarios",
+            "url": "http://127.0.0.1:8000/usuarios/autenticar",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2024-12-19T20:23:49.429Z",
+            "modified": "2024-12-19T20:26:06.110Z",
+            "headers": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA1NTJ9.00v7MWXZksgOlnaLXE8wfIFW1xjufUzY7iFEDsUAoWs"
+            }
+        },
+        {
+            "_id": "df103b3e-dd2d-417e-bfae-a7f7c172d273",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Atualizar usuarios por Id",
+            "url": "http://127.0.0.1:8000/usuarios/atualizar/1",
+            "method": "PATCH",
+            "sortNum": 50000,
+            "created": "2024-12-19T20:23:49.430Z",
+            "modified": "2024-12-19T20:26:29.403Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string2\",\n  \"cep\": 0,\n  \"password\": \"string\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA1NTJ9.00v7MWXZksgOlnaLXE8wfIFW1xjufUzY7iFEDsUAoWs"
+            }
+        },
+        {
+            "_id": "efd253d0-6555-43d7-8351-f158690f845f",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Cadastrar Administrador",
+            "url": "http://127.0.0.1:8000/admins/cadastrar?ref=0",
+            "method": "POST",
+            "sortNum": 60000,
+            "created": "2024-12-19T20:23:49.431Z",
+            "modified": "2024-12-19T20:23:49.431Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "ref",
+                    "value": "0",
+                    "isPath": false
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\",\n  \"confirm_password\": \"string\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "72133da1-8a17-419e-9420-4f5b1e040804",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Logar Administrador",
+            "url": "http://127.0.0.1:8000/admins/logar",
+            "method": "POST",
+            "sortNum": 70000,
+            "created": "2024-12-19T20:23:49.432Z",
+            "modified": "2024-12-19T20:23:49.432Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}",
+                "form": []
+            }
+        },
+        {
+            "_id": "e6bea4a4-1b25-4053-8de4-977bacfc8ede",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Autenticar Administrador",
+            "url": "http://127.0.0.1:8000/admins/autenticar",
+            "method": "GET",
+            "sortNum": 80000,
+            "created": "2024-12-19T20:23:49.434Z",
+            "modified": "2024-12-19T20:27:06.958Z",
+            "headers": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "5f09102d-3466-4fbd-b8c8-ab904f72948b",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Atualizar administrador por id",
+            "url": "http://127.0.0.1:8000/admins/atualizar/1",
+            "method": "PATCH",
+            "sortNum": 85000,
+            "created": "2024-12-19T20:23:49.437Z",
+            "modified": "2024-12-19T20:27:18.550Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "c7573989-df9a-4b5c-ac70-68574dedcd33",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Listar admins",
+            "url": "http://127.0.0.1:8000/admins",
+            "method": "GET",
+            "sortNum": 87500,
+            "created": "2024-12-19T20:23:49.438Z",
+            "modified": "2024-12-19T20:27:28.969Z",
+            "headers": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "e5520e06-c68b-47b3-a1ff-b107b206d2a9",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Desativar Administradores por id",
+            "url": "http://127.0.0.1:8000/admins/desativar/1",
+            "method": "PATCH",
+            "sortNum": 92500,
+            "created": "2024-12-19T20:23:49.441Z",
+            "modified": "2024-12-19T20:28:58.362Z",
+            "headers": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "a31f9029-b5a1-439c-8d11-4c1ac821472b",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Cadastrar usuarios",
+            "url": "http://127.0.0.1:8000/admins/usuarios/cadastrar",
+            "method": "POST",
+            "sortNum": 97500,
+            "created": "2024-12-19T20:23:49.439Z",
+            "modified": "2024-12-19T20:29:09.774Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\",\n  \"confirm_password\": \"string\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "efc0fc78-835b-4360-9256-945b024841df",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Listar Usuarios",
+            "url": "http://127.0.0.1:8000/admins/usuarios",
+            "method": "GET",
+            "sortNum": 98750,
+            "created": "2024-12-19T20:23:49.435Z",
+            "modified": "2024-12-19T20:29:22.232Z",
+            "headers": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "60c4d592-6ff2-44e0-90eb-52a49d5efe27",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Atualizar Usuario",
+            "url": "http://127.0.0.1:8000/admins/usuarios/atualizar/1",
+            "method": "PATCH",
+            "sortNum": 99375,
+            "created": "2024-12-19T20:23:49.440Z",
+            "modified": "2024-12-19T20:29:31.427Z",
+            "headers": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"name\": \"string\",\n  \"email\": \"string\",\n  \"cpf\": 0,\n  \"data_nascimento\": \"string\",\n  \"telefone\": \"string\",\n  \"cep\": 0,\n  \"password\": \"string\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        },
+        {
+            "_id": "3557dc3a-95bb-4c2c-9054-80e128c3408a",
+            "colId": "b7df6d4c-d5c7-4932-a003-0d0d7b012ea2",
+            "containerId": "",
+            "name": "Desativar Usuarios por id",
+            "url": "http://127.0.0.1:8000/admins/usuarios/desativar/1",
+            "method": "PATCH",
+            "sortNum": 100000,
+            "created": "2024-12-19T20:23:49.436Z",
+            "modified": "2024-12-19T20:30:01.321Z",
+            "headers": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzdHJpbmciLCJleHAiOjE3MzQ2NDA2MTJ9.FSIxye2vhZ2ToUcEJ7f0jxP4svmMJQK18ych0YgGrEM"
+            }
+        }
+    ],
+    "ref": "vDRQO0tu4jLlAWSRhEg6AB5qN0XGIN1g4ZFh1TaZ-0NyZF5M-D9BQk5br13DOA-zoct9T6KvN3fZr9fABIqREw"
+}
