@@ -3,8 +3,8 @@
 ## Instalação do venv
 
 ```sh
-    python3 -m venv venv
-    source venv/bin/activate
+    python3 -m venv venv-buy
+    source venv-buy/bin/activate
 ```
 ## Atualizando pip
 

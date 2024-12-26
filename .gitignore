@@ -1,5 +1,6 @@
 .env
 venv
+venv-buy
 .venv
 __pycache__
 teste

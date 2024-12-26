@@ -45,7 +45,7 @@ class Admin(IncludeAdmin, table=True):
   clube_fidelidade: bool
   cod_indicacao: int
   status: bool
-  admin: bool = Field(default=False) 
+  admin: bool = Field(default=True) 
 
 # Login
 class SignInAdminRequest(SQLModel):
