@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from src.auth_utils import get_logged_user, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
-from src.models.user_models import BaseUser, SignInUserRequest, SignUpUserRequest, User,  UpdateUserRequest
+from src.models.users_models import BaseUser, SignInUserRequest, SignUpUserRequest, User,  UpdateUserRequest
 from passlib.context import CryptContext
 import jwt
 
@@ -95,8 +95,13 @@ def autenticar_usuario(user: Annotated[User, Depends(get_logged_user)]):
 def atualizar_usuario_por_id(
     user_id: int,
     user_data: UpdateUserRequest,
-    user: Annotated[User, Depends(get_logged_user)],
+    user: Annotated[User, Depends(get_logged_user)]
 ):
+    if not (user.id or user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
     with Session(get_engine()) as session:
         sttm = select(User).where(User.id == user_id)
         user_to_update = session.exec(sttm).first()

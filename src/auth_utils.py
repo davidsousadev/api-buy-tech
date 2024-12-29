@@ -8,8 +8,8 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlmodel import Session, select
 from decouple import config
 from src.database import get_engine
-from src.models.user_models import User
-from src.models.admin_models import Admin
+from src.models.users_models import User
+from src.models.admins_models import Admin
 
 SECRET_KEY = config('SECRET_KEY')
 ALGORITHM = config('ALGORITHM')
@@ -80,7 +80,6 @@ def hash_password(plain_password: str):
   hash = pwd_context.hash(plain_password)
   return hash
 
-
 def verify_hash(plain_password: str, hashed_password: str):
   pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
   is_correct = pwd_context.verify(plain_password, hashed_password)
@@ -94,7 +93,6 @@ def generate_token(sub: str, token_type: Literal['access', 'refresh']):
   
   token = jwt.encode({'sub': sub, 'exp': expires}, key=SECRET_KEY, algorithm=ALGORITHM)
   return token
-
 
 def decode_token(token: str):
   payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)

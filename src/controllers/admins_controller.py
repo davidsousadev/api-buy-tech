@@ -2,10 +2,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from src.auth_utils import get_logged_user, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
-from src.models.admin_models import BaseAdmin, SignInAdminRequest, SignUpAdminRequest, Admin, AdminResponse, UpdateAdminRequest
-from src.models.user_models import User,  UpdateUserRequest, UserResponse, BaseUser, SignUpUserRequest
+from src.models.admins_models import BaseAdmin, SignInAdminRequest, SignUpAdminRequest, Admin, AdminResponse, UpdateAdminRequest
+from src.models.users_models import User,  UpdateUserRequest, UserResponse, BaseUser, SignUpUserRequest
 from passlib.context import CryptContext
 import jwt
 

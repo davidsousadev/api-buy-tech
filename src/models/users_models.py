@@ -64,7 +64,6 @@ class UpdateUserRequest(BaseModel):
     password: str | None = None
 
 # Lista de usuarios
-
 class UserResponse(BaseModel):
     id: int
     name: str  

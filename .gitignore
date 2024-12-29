@@ -6,3 +6,4 @@ __pycache__
 teste
 teste/*
 banco_emails.db
+.pytest_cache

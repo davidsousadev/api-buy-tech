@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status, HTTPException
 from decouple import config
 from davidsousa import enviar_email
-from src.models.email_models import Email, EmailDados
+from src.models.emails_models import Email, EmailDados
 
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
