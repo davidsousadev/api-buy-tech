@@ -1,12 +1,13 @@
 from sqlmodel import SQLModel, Field
 
-class CarrinhoBase(SQLModel):
-    produto_codigo: int = Field(default=None, foreign_key="produto.id") 
+class BaseCarrinho(SQLModel):
+    produto_codigo: int = Field(default=None, foreign_key="product.id") 
     user_id: int = Field(default=None, foreign_key="user.id")
     quantidade: int = Field(default=1)
     
 # Tabela Carrinho
-class Carrinho(CarrinhoBase, table=True):
+class Carrinho(BaseCarrinho, table=True):
     id: int = Field(default=None, primary_key=True)
-    status: bool = Field(default=True)
-    codigo: int = Field(default=None)
+    status: bool = Field(default=False)
+    codigo: str = Field(default=None)
+    total: float = Field(default=None)
