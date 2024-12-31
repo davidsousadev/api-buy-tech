@@ -6,7 +6,7 @@ import json
 
 class BaseVenda(SQLModel):
     user: int = Field(default=None, foreign_key="user.id")
-    cupom_de_desconto: str = Field(default=None)
+    cupom_de_desconto: str = Field(default="") # Se não for passado nenhum cupom fica vazio
     
 
 # Tabela Venda  

@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .controllers.emails_controller import router as email_router
 from .controllers.users_controller import router as user_router
 from .controllers.admins_controller import router as admins_router
+from .controllers.cupons_controller import router as cupons_router
 from .controllers.categorias_controller import router as categorias_router
 from .controllers.products_controller import router as products_router
 from .controllers.vendas_controller import router as vendas_router
@@ -31,6 +32,7 @@ def create_app():
     app.include_router(email_router, prefix='/email', tags=["E-mail"])
     app.include_router(user_router, prefix='/usuarios', tags=["Usuarios"])
     app.include_router(admins_router, prefix='/admins', tags=["Admins"])
+    app.include_router(cupons_router, prefix='/cupons', tags=["Cupons"])
     
     
     # Inicia o banco

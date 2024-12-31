@@ -17,7 +17,7 @@ class BaseProduct(SQLModel):
 class Product(BaseProduct, table=True):
     id: int = Field(default=None, primary_key=True)
     criacao: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
-    status: bool = Field(default=False)        
+    status: bool = Field(default=False)   # Se esta em promoção ou não     
     
 class UpdateProductRequest(BaseProduct):
     status: bool = Field(default=False)

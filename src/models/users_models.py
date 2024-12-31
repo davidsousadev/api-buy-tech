@@ -46,6 +46,7 @@ class User(IncludeUser, table=True):
   pontos_fidelidade: int
   clube_fidelidade: bool
   cod_indicacao: int
+  cod_confirmacao_email: str
   status: bool
   admin: bool = Field(default=False) 
 
@@ -68,6 +69,7 @@ class UserResponse(BaseModel):
     id: int
     name: str  
     email: str
+    cod_confirmacao_email: str
     criacao_de_conta: str
     pontos_fidelidade: int
     clube_fidelidade: bool

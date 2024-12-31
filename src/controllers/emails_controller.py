@@ -1,28 +1,54 @@
 from fastapi import APIRouter, status, HTTPException
 from decouple import config
 from davidsousa import enviar_email
-from src.models.emails_models import Email, EmailDados
+from src.models.emails_models import Email
+from sqlmodel import Session, select
+from src.database import get_engine
+from src.models.users_models import User
+from src.html.email_confirmacao import template
 
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
-KEY_POST_EMAIL= config('KEY_POST_EMAIL')
-
+URL= config('URL')
 router = APIRouter()
-
-@router.post('', status_code=status.HTTP_201_CREATED)
-def enviar_email_default(envio_email: EmailDados):
+"""
+# Confirma e-mail com codigo de confirmacao
+@router.get('/confirmar', status_code=status.HTTP_200_OK)
+def email_de_confirmacao(code: str):
+    if code=="Confirmado":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="E-mail já confirmado."
+            ) 
+    if len(code)>6:
+       raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Codigo invalido."
+            )
+                
+    with Session(get_engine()) as session:
+        statement = select(User).where(User.cod_confirmacao_email == code)
+        user = session.exec(statement).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Codigo invalido."
+            )
+            
+    url=f"{URL}/email/confirmado/?code={code}"
+    
+    corpo_de_confirmacao = template(user.name, url)
+    
     email = Email(
         nome_remetente = "Buy Tech",
         remetente = EMAIL,
         senha = KEY_EMAIL,
-        destinatario = envio_email.destinatario,
-        assunto = envio_email.assunto,
-        corpo = envio_email.corpo,
-        key = envio_email.key
+        destinatario = user.email,
+        assunto = "Confirmar E-mail",
+        corpo = corpo_de_confirmacao
         )
 
-    if KEY_POST_EMAIL==envio_email.key:
-        envio = enviar_email(
+    envio = enviar_email(
             email.nome_remetente, 
             email.remetente, 
             email.senha, 
@@ -31,9 +57,39 @@ def enviar_email_default(envio_email: EmailDados):
             email.corpo, 
             importante = True,
             html = True)
-        if envio:
-            return {"message": "E-mail enviado com sucesso!"}
+    if envio:
+        return {"email": True}
     raise HTTPException(
         status_code=status.HTTP_404_NOT_FOUND,
         detail=f"Erro ao enviar e-mail"
     )
+"""    
+# Verifica se o email foi confirmado    
+@router.get('/confirmado', status_code=status.HTTP_200_OK)
+def email_confirmado(code: str):
+    with Session(get_engine()) as session:
+        sttm = select(User).where(User.cod_confirmacao_email == code)
+        user_to_update = session.exec(sttm).first()
+
+        if not user_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Codigo de recuperação invalido!"
+            )
+        if user_to_update.cod_confirmacao_email=="Confirmado":
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="E-mail já confirmado."
+            )  
+        if len(user_to_update.cod_confirmacao_email)>6:
+            user_to_update.email=code
+        
+        # Atualizar  o e-mail
+        user_to_update.cod_confirmacao_email = "Confirmado"
+
+        # Salvar as alterações no banco de dados
+        session.add(user_to_update)
+        session.commit()
+        session.refresh(user_to_update)
+
+        return {"email": True}

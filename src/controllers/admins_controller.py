@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
 from src.models.admins_models import BaseAdmin, SignInAdminRequest, SignUpAdminRequest, Admin, AdminResponse, UpdateAdminRequest
 from src.models.users_models import User,  UpdateUserRequest, UserResponse, BaseUser, SignUpUserRequest
+from src.models.vendas_models import BaseVenda, Venda, UpdateVendaRequest
+from src.models.carrinho_models import Carrinho
 from passlib.context import CryptContext
 import jwt
 
@@ -301,3 +303,4 @@ def desativar_ususarios(user_id: int, admin: Annotated[Admin, Depends(get_logged
         session.refresh(user_to_update)
 
         return {"message": "Usuário desativado com sucesso!"}
+    
