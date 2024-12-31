@@ -9,5 +9,9 @@ class BaseCarrinho(SQLModel):
 class Carrinho(BaseCarrinho, table=True):
     id: int = Field(default=None, primary_key=True)
     status: bool = Field(default=False)
-    codigo: str = Field(default=None)
-    total: float = Field(default=None)
+    codigo: str
+    preco: float = Field(default=None)
+    
+    
+class UpdateCarrinhoRequest(SQLModel):
+    quantidade: int = Field(default=1)

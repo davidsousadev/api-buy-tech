@@ -4,6 +4,7 @@ from sqlmodel import Session, select
 from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
 from src.models.admins_models import Admin
+from src.models.categorias_models import Categoria
 from src.models.products_models import BaseProduct, Product, UpdateProductRequest
 
 router = APIRouter()
@@ -25,13 +26,25 @@ def cadastrar_produto(product_data: BaseProduct, admin: Annotated[Admin, Depends
         )
         
     with Session(get_engine()) as session:
-        # Pega produto por nome
+        
+        # Verifica dados do produto
         sttm = select(Product).where(Product.name == product_data.name)
         product = session.exec(sttm).first()
     
-    if product:
-      raise HTTPException(status_code=400, detail='Produto já existe com esse nome!')
-    
+        if product:
+            raise HTTPException(status_code=400, detail='Produto já existe com esse nome!')
+        if product_data.preco<=0:
+            raise HTTPException(status_code=400, detail='Preço invalido!')
+        if product_data.quantidade_estoque<=0:
+            raise HTTPException(status_code=400, detail='Quantidade invalida!')
+        
+        # Verifica categoria
+        sttm = select(Categoria).where(Categoria.id == product_data.categoria)
+        categoria = session.exec(sttm).first()
+        
+        if not categoria:
+            raise HTTPException(status_code=400, detail='Categoria não existe!')
+        
     product = Product(
         name=product_data.name,
         preco=product_data.preco, 

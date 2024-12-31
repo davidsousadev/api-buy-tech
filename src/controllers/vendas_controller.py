@@ -5,44 +5,81 @@ from src.auth_utils import get_logged_admin, get_logged_user
 from src.database import get_engine
 from src.models.admins_models import Admin
 from src.models.vendas_models import BaseVenda, Venda, UpdateVendaRequest
+from src.models.carrinho_models import Carrinho
 from src.models.users_models import User
 router = APIRouter()
 
 @router.get("", response_model=List[Venda])
-def listar_vendas():
+def listar_vendas(user: Annotated[User, Depends(get_logged_user)]):
+    if not user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+        
     with Session(get_engine()) as session:
         statement = select(Venda)
         products = session.exec(statement).all()
         return products
 
-@router.post("", response_model=BaseVenda)
-def cadastrar_venda(venda_data: BaseVenda):
-    
+@router.post("")
+def cadastrar_venda(venda_data: BaseVenda,
+                    user: Annotated[User, Depends(get_logged_user)]
+                    ):
+    if not user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+            
+    with Session(get_engine()) as session:
+        
+        # Verifica se o cliente existe
+        sttm = select(User).where(User.id == venda_data.user)
+        cliente = session.exec(sttm).first()
+
+        if not cliente:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Cliente não encontrado."
+            )
+        
+        statement = select(Carrinho).where(Carrinho.user_id == user.id,
+                                           Carrinho.status == False)
+        itens = session.exec(statement).all()
+        if not itens: 
+           raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="O carrinho está vazio."
+            ) 
+        if itens:
+            itens_carrinho=[]
+            valor_items = 0
+            for item in itens:
+                itens_carrinho.append(item)
+                valor_items += item.preco * item.quantidade
+
     venda = Venda(
         user=venda_data.user,
-        produtos=venda_data.produtos, 
+        produtos=f"{itens_carrinho}", 
         cupom_de_desconto=venda_data.cupom_de_desconto,
-        pedido_personalizado=venda_data.pedido_personalizado
+        status=False,
+        total=valor_items
     )
-    total = 0
-    for produto in venda.produtos:
-        total += produto.preco
-        
-    venda.total = total
     
-    with Session(get_engine()) as session:
-        session.add(venda)
-        session.commit()
-        session.refresh(venda)
-        return venda
-  
+    session.add(venda)
+    session.commit()
+    session.refresh(venda)
+    return venda
+
+    
 @router.patch("/{venda_id}")
 def atualizar_venda_por_id(
     venda_id: int,
     venda_data: UpdateVendaRequest,
-    admin: Annotated[Admin, Depends(get_logged_admin)],
+    user: Annotated[User, Depends(get_logged_admin)],
 ):
-    if not admin.admin:
+    if not user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
@@ -57,11 +94,31 @@ def atualizar_venda_por_id(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Venda não encontrada."
             )
+        statement = select(Carrinho).where(Carrinho.user_id == user.id,
+                                           Carrinho.status == False)
         
-        # Atualizar os campos fornecidos
+        itens = session.exec(statement).all()
+        if not itens: 
+           raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="O carrinho está vazio."
+            ) 
+        if itens:
+            itens_carrinho=[]
+            valor_items = 0
+            for item in itens:
+                itens_carrinho.append(item.id)
+                valor_items += item.preco * item.quantidade
+        
+        # Atualizar o status da venda
         if venda_data.status:
             venda_to_update.status = venda_data.status
-        
+        else: 
+            venda_to_update.status = venda_data.status
+            
+
+        venda_to_update.produtos=f"{itens_carrinho}"
+        venda_to_update.total=valor_items
             
         # Salvar as alterações no banco de dados
         session.add(venda_to_update)

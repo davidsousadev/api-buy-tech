@@ -61,9 +61,14 @@ def atualizar_categorias_por_id(
         if not categoria_to_update:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Produto não encontrado."
+                detail="Categoria não encontrada."
             )
-        
+        if categoria_to_update.name==categoria_data.name:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Categoria já existe."
+            )
+            
         # Atualizar os campos fornecidos
         if categoria_data.name:
             categoria_to_update.name = categoria_data.name
