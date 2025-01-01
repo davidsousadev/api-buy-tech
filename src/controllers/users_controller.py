@@ -1,4 +1,3 @@
-import httpx
 import string
 import random
 from datetime import datetime, timedelta, timezone
@@ -13,7 +12,7 @@ import jwt
 from decouple import config
 from davidsousa import enviar_email
 from src.models.emails_models import Email
-from src.html.email_confirmacao import template
+from src.html.email_confirmacao import template_confirmacao
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')
@@ -86,7 +85,7 @@ async def cadastrar_usuario(user_data: SignUpUserRequest, ref: int | None = None
     
     # Gera a URL de confirmação
     url = f"{URL}/email/confirmado/?code={code}"
-    corpo_de_confirmacao = template(user.name, url)
+    corpo_de_confirmacao = template_confirmacao(user.name, url)
 
     # Envia o e-mail de confirmação
     email = Email(
@@ -208,10 +207,7 @@ def atualizar_usuario_por_id(
           if not user:
             user_to_update.cod_confirmacao_email=user_to_update.email
             user_to_update.email = user_data.email
-            
-          
-          
-          
+             
         if user_data.cpf:
           # Pegar usuário por cpf
           sttm = select(User).where(User.cpf == user_data.cpf)
@@ -237,4 +233,5 @@ def atualizar_usuario_por_id(
         session.refresh(user_to_update)
 
         return {"message": "Usuário atualizado com sucesso!", "user": user_to_update}
+
 

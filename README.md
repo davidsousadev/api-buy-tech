@@ -1,12 +1,12 @@
 # API do projeto - > [BUY TECH](https://github.com/davidsousadev/buy-tech)
 
-# Proximos passos
+# Próximos passos
 
-- > Recuperar cadastro via(CPF, e-mail)
-- > Recuperar senha via(CPF, e-mail)
 - > Aplicar Cupons as vendas e verificar
 - > Confirmar pagamento
 - > Pontos Fidelidade
+- > Clube fidelidade
+- > Realizar todos os processos de fluxo via e-mail
 
 # Estrutura inicial
 

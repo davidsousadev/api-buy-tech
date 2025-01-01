@@ -1,10 +1,10 @@
-def template_confirmacao(name, url):
+def template_redefinir_senha(name, password):
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirmação de Email - Buy Tech</title>
+    <title>Recuperar de Senha - Buy Tech</title>
     <style>
         body {{
             font-family: Arial, sans-serif;
@@ -52,11 +52,11 @@ def template_confirmacao(name, url):
             <span>Buy Tech</span>
         </div>
         <div class="email-body">
-            <h1>Confirmação de Email</h1>
+            <h1>Recuperar de Senha</h1>
             <p>Olá, {name}</p>
-            <p>Obrigado por escolher a Buy Tech! Por favor, confirme seu email para completar o processo.</p>
-            <a href="{url}" class="btn">Confirmar Email</a>
-            <p>Se você não solicitou esta ação, ignore este email.</p>
+            <p>Recebemos uma solicitação para redefinir sua senha. </p>
+            <p><h5>Sua nova senha faça o login e altere:</h5></p>
+            <h3>{password}</h3>
         </div>
         <div class="email-footer">
             <p>&copy; 2024 Buy Tech. Todos os direitos reservados.</p>

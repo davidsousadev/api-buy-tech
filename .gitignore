@@ -6,5 +6,5 @@ __pycache__
 teste*
 teste*/*
 *.db
-buy-tech.db
 .pytest_cache
+buy-tech.db
