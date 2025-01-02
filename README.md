@@ -2,10 +2,11 @@
 
 # Próximos passos
 
-- > Aplicar Cupons as vendas e verificar
+- > Ajustar envio de e-mail com dados do pedido, codigo de autenticação
 - > Confirmar pagamento
 - > Pontos Fidelidade
 - > Clube fidelidade
+- > Alerta de promoções
 - > Realizar todos os processos de fluxo via e-mail
 
 # Estrutura inicial
@@ -20,9 +21,9 @@ api-buy-tech/
 │   │   ├── categorias_controller.py   # Rotas das Categorias
 │   │   ├── cupons_controller.py       # Rotas dos Cupons
 │   │   ├── emails_controller.py       # Rotas dos E-mails
-│   │   ├── products_controller.py     # Rotas dos Produtos
-│   │   ├── users_controller.py        # Rotas dos Usuarios
-│   │   └── vendas_controller.py       # Rotas das Vendas
+│   │   ├── produtos_controller.py     # Rotas dos Produtos
+│   │   ├── clientes_controller.py     # Rotas dos Clientes
+│   │   └── pedidos_controller.py      # Rotas das Pedidos
 │   │
 │   ├── models/                        # Modelos de dados
 │   │   ├── admins_models.py           # Dados dos Admin
@@ -30,9 +31,9 @@ api-buy-tech/
 │   │   ├── categorias_models.py       # Dados das Categorias
 │   │   ├── cupons_models.py           # Dados dos Cupons
 │   │   ├── emails_models.py           # Dados dos E-mails
-│   │   ├── products_models.py         # Dados dos Produtos
-│   │   ├── users_models.py            # Dados dos Usuarios
-│   │   └── vendas_models.py           # Dados das Vendas
+│   │   ├── produtos_models.py         # Dados dos Produtos
+│   │   ├── clientes_models.py         # Dados dos Clientes
+│   │   └── pedidos_models.py          # Dados das Pedidos
 │   │
 │   │
 │   │

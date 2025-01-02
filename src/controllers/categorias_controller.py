@@ -26,14 +26,14 @@ def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, 
         
     with Session(get_engine()) as session:
         # Pega produto por nome
-        sttm = select(Categoria).where(Categoria.name == categoria_data.name)
+        sttm = select(Categoria).where(Categoria.nome == categoria_data.nome)
         categoria = session.exec(sttm).first()
     
     if categoria:
       raise HTTPException(status_code=400, detail='Categoria já existe com esse nome!')
     
     categoria = Categoria(
-        name=categoria_data.name,
+        nome=categoria_data.nome,
     )
   
     with Session(get_engine()) as session:
@@ -53,8 +53,9 @@ def atualizar_categorias_por_id(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
-        
+
     with Session(get_engine()) as session:
+        # Verificar se a categoria com o ID fornecido existe
         sttm = select(Categoria).where(Categoria.id == categoria_id)
         categoria_to_update = session.exec(sttm).first()
 
@@ -63,19 +64,38 @@ def atualizar_categorias_por_id(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Categoria não encontrada."
             )
-        if categoria_to_update.name==categoria_data.name:
+            
+        if categoria_to_update.nome == categoria_data.nome:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Categoria já existe."
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Não houve alteração de nome de categoria: {categoria_data.nome}"
             )
             
+        # Verificar se já existe outra categoria com o mesmo nome
+        sttm_nome = (
+            select(Categoria)
+            .where(Categoria.nome == categoria_data.nome, Categoria.id != categoria_id)
+        )
+        categoria_com_mesmo_nome = session.exec(sttm_nome).first()
+
+        if categoria_com_mesmo_nome:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Já existe outra categoria com o mesmo nome."
+            )
+
+        
+        
         # Atualizar os campos fornecidos
-        if categoria_data.name:
-            categoria_to_update.name = categoria_data.name
-            
+        if categoria_data.nome:
+            categoria_to_update.nome = categoria_data.nome
+
         # Salvar as alterações no banco de dados
         session.add(categoria_to_update)
         session.commit()
         session.refresh(categoria_to_update)
 
-        return {"message": "Categoria atualizada com sucesso!", "Categorias": categoria_to_update}
+        return {
+            "message": "Categoria atualizada com sucesso!",
+            "categoria": categoria_to_update
+        }

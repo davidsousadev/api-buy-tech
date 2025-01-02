@@ -4,7 +4,7 @@ import datetime
 from sqlmodel import SQLModel, Field
    
 class BaseAdmin(SQLModel):
-  name: str
+  nome: str
   email: str
   
 
@@ -44,6 +44,7 @@ class Admin(IncludeAdmin, table=True):
   pontos_fidelidade: int
   clube_fidelidade: bool
   cod_indicacao: int
+  cod_confirmacao_email: str
   status: bool
   admin: bool = Field(default=True) 
 
@@ -53,7 +54,7 @@ class SignInAdminRequest(SQLModel):
   password: str
 
 class UpdateAdminRequest(BaseModel):
-    name: str | None = None
+    nome: str | None = None
     email: str | None = None
     cpf: int | None = None
     data_nascimento: str | None = None
@@ -65,8 +66,9 @@ class UpdateAdminRequest(BaseModel):
 
 class AdminResponse(BaseModel):
     id: int
-    name: str  
+    nome: str  
     email: str
+    cod_confirmacao_email: str
     criacao_de_conta: str
     pontos_fidelidade: int
     clube_fidelidade: bool
@@ -75,3 +77,4 @@ class AdminResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        

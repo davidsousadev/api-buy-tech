@@ -8,7 +8,7 @@ from jwt import ExpiredSignatureError, InvalidTokenError
 from sqlmodel import Session, select
 from decouple import config
 from src.database import get_engine
-from src.models.users_models import User
+from src.models.clientes_models import Cliente
 from src.models.admins_models import Admin
 
 SECRET_KEY = config('SECRET_KEY')
@@ -18,7 +18,7 @@ REFRESH_EXPIRES=60*24*3
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
 
-async def get_logged_user(token: Annotated[str, Depends(oauth2_scheme)]):
+async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
     exception = HTTPException(status_code=401, detail='Não autorizado!')
@@ -33,13 +33,13 @@ async def get_logged_user(token: Annotated[str, Depends(oauth2_scheme)]):
             raise exception
 
         with Session(get_engine()) as session:
-            sttm = select(User).where(User.email == email)
-            user = session.exec(sttm).first()
+            sttm = select(Cliente).where(Cliente.email == email)
+            cliente = session.exec(sttm).first()
 
-            if not user:
+            if not cliente:
                 raise exception
 
-            return user
+            return cliente
 
     except ExpiredSignatureError:
         raise expired_exception  # Token expirado

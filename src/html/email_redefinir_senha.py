@@ -1,9 +1,9 @@
-def template_redefinir_senha(name, password):
+def template_redefinir_senha(nome, password):
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta nome="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recuperar de Senha - Buy Tech</title>
     <style>
         body {{
@@ -53,7 +53,7 @@ def template_redefinir_senha(name, password):
         </div>
         <div class="email-body">
             <h1>Recuperar de Senha</h1>
-            <p>Olá, {name}</p>
+            <p>Olá, {nome}</p>
             <p>Recebemos uma solicitação para redefinir sua senha. </p>
             <p><h5>Sua nova senha faça o login e altere:</h5></p>
             <h3>{password}</h3>

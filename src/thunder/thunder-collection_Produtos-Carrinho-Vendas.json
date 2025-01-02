@@ -1,6 +1,6 @@
 {
-    "clientName": "Thunder Client",
-    "collectionName": "Produtos-Carrinho-Vendas",
+    "clientnome": "Thunder Client",
+    "collectionnome": "Produtos-Carrinho-pedidos",
     "collectionId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
     "dateExported": "2024-12-31T00:15:11.820Z",
     "version": "1.2",
@@ -10,7 +10,7 @@
             "_id": "4f08752c-8665-4ff8-94b1-ab46e15051fc",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Listar Categorias",
+            "nome": "Listar Categorias",
             "url": "http://127.0.0.1:8000/categorias",
             "method": "GET",
             "sortNum": 5000,
@@ -22,7 +22,7 @@
             "_id": "33cbc174-6b12-4f81-9fbb-68cdbfc9e940",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Cadastrar Categorias",
+            "nome": "Cadastrar Categorias",
             "url": "http://127.0.0.1:8000/categorias",
             "method": "POST",
             "sortNum": 10000,
@@ -31,7 +31,7 @@
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"Placa de Video\"\n}",
+                "raw": "{\n  \"nome\": \"Placa de Video\"\n}",
                 "form": []
             },
             "auth": {
@@ -43,7 +43,7 @@
             "_id": "5ebe69db-ea36-4526-902b-60352f51512f",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Atualizar Categorias",
+            "nome": "Atualizar Categorias",
             "url": "http://127.0.0.1:8000/categorias/1",
             "method": "PATCH",
             "sortNum": 30000,
@@ -52,7 +52,7 @@
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"Computador\"\n}",
+                "raw": "{\n  \"nome\": \"Computador\"\n}",
                 "form": []
             },
             "auth": {
@@ -64,7 +64,7 @@
             "_id": "b141d89c-6f98-40ce-b3e2-2705d41c5136",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Listar Produtos",
+            "nome": "Listar Produtos",
             "url": "http://127.0.0.1:8000/produtos",
             "method": "GET",
             "sortNum": 40000,
@@ -76,7 +76,7 @@
             "_id": "307655ed-2a51-4f21-bd4a-3d0db1ba93f1",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Cadastrar Produtos",
+            "nome": "Cadastrar Produtos",
             "url": "http://127.0.0.1:8000/produtos",
             "method": "POST",
             "sortNum": 50000,
@@ -85,7 +85,7 @@
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"Sansung Galaxy 7\",\n  \"preco\": 1500,\n  \"foto\": \"string\",\n  \"marca\": \"string\",\n  \"categoria\": 1,\n  \"descricao\": \"string\",\n  \"quantidade_estoque\": 10,\n  \"personalizado\": false\n}",
+                "raw": "{\n  \"nome\": \"Sansung Galaxy 7\",\n  \"preco\": 1500,\n  \"foto\": \"string\",\n  \"marca\": \"string\",\n  \"categoria\": 1,\n  \"descricao\": \"string\",\n  \"quantidade_estoque\": 10,\n  \"personalizado\": false\n}",
                 "form": []
             },
             "auth": {
@@ -97,7 +97,7 @@
             "_id": "8e89189d-8f72-414f-b739-2f1052ee43c2",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Atualizar Produtos",
+            "nome": "Atualizar Produtos",
             "url": "http://127.0.0.1:8000/produtos/2",
             "method": "PATCH",
             "sortNum": 60000,
@@ -106,7 +106,7 @@
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"name\": \"Sansung Galaxy 7\",\n  \"preco\": 0,\n  \"foto\": \"string\",\n  \"marca\": \"string\",\n  \"categoria\": 2,\n  \"descricao\": \"string\",\n  \"quantidade_estoque\": 0,\n  \"personalizado\": false,\n  \"status\": false\n}",
+                "raw": "{\n  \"nome\": \"Sansung Galaxy 7\",\n  \"preco\": 0,\n  \"foto\": \"string\",\n  \"marca\": \"string\",\n  \"categoria\": 2,\n  \"descricao\": \"string\",\n  \"quantidade_estoque\": 0,\n  \"personalizado\": false,\n  \"status\": false\n}",
                 "form": []
             },
             "auth": {
@@ -118,7 +118,7 @@
             "_id": "5053db86-22b0-4706-bda0-1c33e56859bc",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Listar Carrinho",
+            "nome": "Listar Carrinho",
             "url": "http://127.0.0.1:8000/carrinho",
             "method": "GET",
             "sortNum": 70000,
@@ -134,7 +134,7 @@
             "_id": "63b986c0-d311-4663-a006-efe83bdb4230",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Cadastrar Itens no carrinho",
+            "nome": "Cadastrar Itens no carrinho",
             "url": "http://127.0.0.1:8000/carrinho",
             "method": "POST",
             "sortNum": 80000,
@@ -143,7 +143,7 @@
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"produto_codigo\": 1,\n  \"user_id\": 1,\n  \"quantidade\": 2\n}",
+                "raw": "{\n  \"produto_codigo\": 1,\n  \"cliente_id\": 1,\n  \"quantidade\": 2\n}",
                 "form": []
             },
             "auth": {
@@ -155,7 +155,7 @@
             "_id": "9b4c7750-6ef7-476a-8285-1ffc56f8a51c",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Atualizar Item no Carrinho",
+            "nome": "Atualizar Item no Carrinho",
             "url": "http://127.0.0.1:8000/carrinho/1",
             "method": "PATCH",
             "sortNum": 90000,
@@ -176,8 +176,8 @@
             "_id": "f6e01355-f471-4813-8c2c-390a68e125a3",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Listar Vendas",
-            "url": "http://127.0.0.1:8000/vendas",
+            "nome": "Listar pedidos",
+            "url": "http://127.0.0.1:8000/pedidos",
             "method": "GET",
             "sortNum": 100000,
             "created": "2024-12-30T23:42:18.494Z",
@@ -192,8 +192,8 @@
             "_id": "8b3cae60-213d-4111-850a-7fd0e12db0f2",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Cadastrar Vendas",
-            "url": "http://127.0.0.1:8000/vendas",
+            "nome": "Cadastrar pedidos",
+            "url": "http://127.0.0.1:8000/pedidos",
             "method": "POST",
             "sortNum": 110000,
             "created": "2024-12-30T23:47:55.989Z",
@@ -201,7 +201,7 @@
             "headers": [],
             "body": {
                 "type": "json",
-                "raw": "{\n  \"user\": 1,\n  \"cupom_de_desconto\": \"string\"\n}",
+                "raw": "{\n  \"cliente\": 1,\n  \"cupom_de_desconto\": \"string\"\n}",
                 "form": []
             },
             "auth": {
@@ -213,8 +213,8 @@
             "_id": "766fbe0e-c650-4b67-93ac-00c3f1818965",
             "colId": "36087204-fefd-4bde-b1b5-4b2503b12ff4",
             "containerId": "",
-            "name": "Atualizar Vendas",
-            "url": "http://127.0.0.1:8000/vendas/1",
+            "nome": "Atualizar pedidos",
+            "url": "http://127.0.0.1:8000/pedidos/1",
             "method": "PATCH",
             "sortNum": 120000,
             "created": "2024-12-31T00:03:49.856Z",

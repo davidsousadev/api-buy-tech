@@ -3,8 +3,8 @@ from datetime import datetime
 import datetime
 from sqlmodel import SQLModel, Field
     
-class BaseProduct(SQLModel):
-    name: str
+class BaseProduto(SQLModel):
+    nome: str
     preco: float
     foto: str
     marca: str
@@ -13,11 +13,11 @@ class BaseProduct(SQLModel):
     quantidade_estoque: int
     personalizado: bool = Field(default=False)  
        
-# Tabela Product  
-class Product(BaseProduct, table=True):
+# Tabela Produto  
+class Produto(BaseProduto, table=True):
     id: int = Field(default=None, primary_key=True)
     criacao: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
     status: bool = Field(default=False)   # Se esta em promoção ou não     
     
-class UpdateProductRequest(BaseProduct):
+class UpdateProdutoRequest(BaseProduto):
     status: bool = Field(default=False)

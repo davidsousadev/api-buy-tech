@@ -1,9 +1,9 @@
-def template_confirmacao(name, url):
+def template_confirmacao(nome, url):
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta nome="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmação de Email - Buy Tech</title>
     <style>
         body {{
@@ -53,7 +53,7 @@ def template_confirmacao(name, url):
         </div>
         <div class="email-body">
             <h1>Confirmação de Email</h1>
-            <p>Olá, {name}</p>
+            <p>Olá, {nome}</p>
             <p>Obrigado por escolher a Buy Tech! Por favor, confirme seu email para completar o processo.</p>
             <a href="{url}" class="btn">Confirmar Email</a>
             <p>Se você não solicitou esta ação, ignore este email.</p>

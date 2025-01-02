@@ -4,7 +4,7 @@ import datetime
 from sqlmodel import SQLModel, Field
 
 class BaseCategoria(SQLModel):
-    name: str
+    nome: str = Field(..., min_length=5, description="A categoria deve ter no mínimo 5 letras.")
     
 # Tabela Categoria  
 class Categoria(BaseCategoria, table=True):

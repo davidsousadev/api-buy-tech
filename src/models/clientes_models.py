@@ -5,13 +5,13 @@ from sqlmodel import SQLModel, Field
 
 
     
-class BaseUser(SQLModel):
-  name: str
+class BaseCliente(SQLModel):
+  nome: str
   email: str
   
 
-# Criar cliente include BaseUser
-class SignUpUserRequest(BaseUser): 
+# Criar cliente include BaseCliente
+class SignUpClienteRequest(BaseCliente): 
   cpf: int      
   data_nascimento: str
   telefone: str       
@@ -20,7 +20,7 @@ class SignUpUserRequest(BaseUser):
   confirm_password: str
   
 # Retorno dos dados
-class UserData(BaseUser):
+class ClienteData(BaseCliente):
   pontos_fidelidade: int
   clube_fidelidade: bool
   cod_indicacao: int
@@ -31,15 +31,15 @@ class UserData(BaseUser):
   telefone: str       
   cep: int  
 
-# Include user
-class IncludeUser(BaseUser): 
+# Include clientes
+class IncludeCliente(BaseCliente): 
   cpf: int      
   data_nascimento: str
   telefone: str       
   cep: int 
   
-# Tabela user  
-class User(IncludeUser, table=True):
+# Tabela clientes  
+class Cliente(IncludeCliente, table=True):
   id: int = Field(default=None, primary_key=True)
   password: str
   criacao_de_conta: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
@@ -51,12 +51,12 @@ class User(IncludeUser, table=True):
   admin: bool = Field(default=False) 
 
 # Login
-class SignInUserRequest(SQLModel):
+class SignInClienteRequest(SQLModel):
   email: str
   password: str
 
-class UpdateUserRequest(BaseModel):
-    name: str | None = None
+class UpdateClienteRequest(BaseModel):
+    nome: str | None = None
     email: str | None = None
     cpf: int | None = None
     data_nascimento: str | None = None
@@ -65,9 +65,9 @@ class UpdateUserRequest(BaseModel):
     password: str | None = None
 
 # Lista de usuarios
-class UserResponse(BaseModel):
+class ClienteResponse(BaseModel):
     id: int
-    name: str  
+    nome: str  
     email: str
     cod_confirmacao_email: str
     criacao_de_conta: str

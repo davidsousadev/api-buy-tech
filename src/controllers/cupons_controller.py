@@ -31,24 +31,25 @@ def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_
         
     with Session(get_engine()) as session:
         # Pega cupom por nome
-        sttm = select(Cupom).where(Cupom.name == cupom_data.name)
+        sttm = select(Cupom).where(Cupom.nome == cupom_data.nome)
         cupom = session.exec(sttm).first()
     
     if cupom:
       raise HTTPException(status_code=400, detail='Cupom já existe com esse nome!')
+    if (1 <= cupom_data.valor <= 5000) and (5 <= len(cupom_data.nome) <= 20):
+        cupom = Cupom(
+            nome=cupom_data.nome,
+            valor=cupom_data.valor,
+            tipo=cupom_data.tipo
+            )
     
-    cupom = Cupom(
-        name=cupom_data.name,
-        valor=cupom_data.valor,
-        tipo=cupom_data.tipo
-    )
-  
-    with Session(get_engine()) as session:
         session.add(cupom)
         session.commit()
         session.refresh(cupom)
         return cupom
-  
+    else: 
+        raise HTTPException(status_code=400, detail='Cupom invalido!')
+    
 @router.patch("/{cupom_id}")
 def atualizar_cupons_por_id(
     cupom_id: int,
@@ -70,7 +71,7 @@ def atualizar_cupons_por_id(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Cupom não encontrado."
             )
-        if cupom_to_update.name==cupom_data.name:
+        if cupom_to_update.nome==cupom_data.nome:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Cupom já existe."
@@ -82,8 +83,8 @@ def atualizar_cupons_por_id(
             ) 
                
         # Atualizar os campos fornecidos
-        if cupom_data.name:
-            cupom_to_update.name = cupom_data.name
+        if cupom_data.nome:
+            cupom_to_update.nome = cupom_data.nome
         if cupom_data.valor:
             cupom_to_update.valor = cupom_data.valor
         if cupom_data.tipo:
@@ -97,3 +98,4 @@ def atualizar_cupons_por_id(
         session.refresh(cupom_to_update)
 
         return {"message": "Cupom atualizada com sucesso!", "cupoms": cupom_to_update}
+    

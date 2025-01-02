@@ -1,0 +1,418 @@
+import string
+import random
+from datetime import datetime, timedelta, timezone
+from typing import Annotated
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlmodel import Session, select
+from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from src.database import get_engine
+from src.models.clientes_models import SignInClienteRequest, SignUpClienteRequest, Cliente, UpdateClienteRequest, ClienteResponse
+from src.models.admins_models import Admin
+from passlib.context import CryptContext
+import jwt
+from decouple import config
+from davidsousa import enviar_email
+from src.models.emails_models import Email
+from src.html.email_confirmacao import template_confirmacao
+
+EMAIL = config('EMAIL')
+KEY_EMAIL = config('KEY_EMAIL')
+URL= config('URL')
+
+router = APIRouter()
+
+def gerar_codigo_confirmacao(tamanho=6):
+        """Gera um código aleatório de confirmação."""
+        caracteres = string.ascii_letters + string.digits
+        return ''.join(random.choices(caracteres, k=tamanho))
+
+@router.get("", response_model=list[ClienteResponse])
+def listar_usuarios(admin: Annotated[Admin, Depends(get_logged_admin)]):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem listar usuarios."
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Cliente)
+        clientes = session.exec(statement).all()
+        return [ClienteResponse.model_validate(u) for u in clientes]
+
+@router.patch("/admin/atualizar/{cliente_id}")
+def atualizar_usuarios_por_id(
+    cliente_id: int,
+    cliente_data: UpdateClienteRequest,
+    admin: Annotated[Cliente, Depends(get_logged_admin)],
+):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+    
+    with Session(get_engine()) as session:
+        sttm = select(Cliente).where(Cliente.id == cliente_id)
+        cliente_to_update = session.exec(sttm).first()
+
+        if not cliente_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado."
+            )
+        
+        if cliente_to_update.cod_confirmacao_email != "Confirmado":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="E-mail não confirmado!"
+            )
+
+        # Atualizar os campos fornecidos
+        if cliente_data.nome:
+            cliente_to_update.nome = cliente_data.nome
+            
+        if cliente_data.email:
+            # Verifica duplicidade de e-mail em Cliente
+            cliente_email_query = select(Cliente).where(Cliente.email == cliente_data.email)
+            if session.exec(cliente_email_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="E-mail já cadastrado por outro usuário!"
+                )
+            
+            # Verifica duplicidade de e-mail em Admin
+            admin_email_query = select(Admin).where(Admin.email == cliente_data.email)
+            if session.exec(admin_email_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="E-mail já cadastrado por um administrador!"
+                )
+
+            # Atualizar o e-mail (mantendo o atual como "não confirmado")
+            cliente_to_update.cod_confirmacao_email = cliente_to_update.email
+            cliente_to_update.email = cliente_data.email
+
+        if cliente_data.cpf:
+            # Verifica duplicidade de CPF em Cliente
+            cliente_cpf_query = select(Cliente).where(Cliente.cpf == cliente_data.cpf)
+            if session.exec(cliente_cpf_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="CPF já cadastrado por outro usuário!"
+                )
+
+            # Verifica duplicidade de CPF em Admin
+            admin_cpf_query = select(Admin).where(Admin.cpf == cliente_data.cpf)
+            if session.exec(admin_cpf_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="CPF já cadastrado por um administrador!"
+                )
+
+            cliente_to_update.cpf = cliente_data.cpf
+
+        if cliente_data.data_nascimento:
+            cliente_to_update.data_nascimento = cliente_data.data_nascimento
+        if cliente_data.telefone:
+            cliente_to_update.telefone = cliente_data.telefone
+        if cliente_data.cep:
+            cliente_to_update.cep = cliente_data.cep
+        if cliente_data.password:
+            cliente_to_update.password = hash_password(cliente_data.password)
+            
+        # Salvar as alterações no banco de dados
+        session.add(cliente_to_update)
+        session.commit()
+        session.refresh(cliente_to_update)
+
+        return {"message": "Usuário atualizado com sucesso!", "cliente": cliente_to_update}
+
+@router.post('/cadastrar', status_code=status.HTTP_201_CREATED)
+async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None = None):
+    with Session(get_engine()) as session:
+        
+        # Verifica se já existe um usuário com esse e-mail
+        sttm = select(Cliente).where(Cliente.email == cliente_data.email)
+        cliente = session.exec(sttm).first()
+        
+        if cliente:
+            raise HTTPException(status_code=400, detail='Já existe um usuário com esse e-mail!')
+
+        # Verifica se já existe um usuário com o código de confirmação de e-mail
+        sttm = select(Cliente).where(Cliente.cod_confirmacao_email == cliente_data.email)
+        cliente = session.exec(sttm).first()
+        
+        if cliente:
+            raise HTTPException(status_code=400, detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!')
+
+        # Verifica duplicidade de e-mail em administradores
+        admin_email_query = select(Admin).where(Admin.email == cliente_data.email)
+        if session.exec(admin_email_query).first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="E-mail já cadastrado por um administrador!"
+            )
+        
+        # Verifica duplicidade de CPF em usuários
+        sttm = select(Cliente).where(Cliente.cpf == cliente_data.cpf)
+        cliente = session.exec(sttm).first()
+
+        if cliente:
+            raise HTTPException(status_code=400, detail='CPF inválido')
+
+        # Verifica duplicidade de CPF em administradores
+        admin_cpf_query = select(Admin).where(Admin.cpf == cliente_data.cpf)
+        if session.exec(admin_cpf_query).first():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="CPF já cadastrado por um administrador!"
+            )
+
+        # Verifica se as senhas coincidem
+        if cliente_data.password != cliente_data.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Senhas não coincidem!'
+            )
+
+        # Hash da senha
+        hash = hash_password(cliente_data.password)
+        link = 0
+
+        if ref is not None:
+            link = ref
+
+        codigo = gerar_codigo_confirmacao()
+
+        # Criação do usuário
+        cliente = Cliente(
+            nome=cliente_data.nome,
+            email=cliente_data.email, 
+            cod_confirmacao_email=codigo,
+            password=hash,
+            cpf=cliente_data.cpf,
+            data_nascimento=cliente_data.data_nascimento,
+            telefone=cliente_data.telefone,
+            cep=cliente_data.cep,
+            pontos_fidelidade=0,
+            clube_fidelidade=False,
+            cod_indicacao=link,
+            status=True
+        )
+        
+        # Gera a URL de confirmação
+        url = f"{URL}/emails/confirmado/?codigo={codigo}"
+        corpo_de_confirmacao = template_confirmacao(cliente.nome, url)
+
+        # Envia o e-mail de confirmação
+        email = Email(
+            nome_remetente="Buy Tech",
+            remetente=EMAIL,
+            senha=KEY_EMAIL,
+            destinatario=cliente.email,
+            assunto="Confirmar E-mail",
+            corpo=corpo_de_confirmacao
+        )
+
+        envio = enviar_email(
+            email.nome_remetente, 
+            email.remetente, 
+            email.senha, 
+            email.destinatario, 
+            email.assunto, 
+            email.corpo, 
+            importante=True,
+            html=True
+        )
+
+        if envio:
+            session.add(cliente)
+            session.commit()
+            session.refresh(cliente)
+            return {"message": "Usuário cadastrado com sucesso! E-mail de confirmação enviado."}
+        
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erro ao enviar o e-mail de confirmação."
+        )
+
+@router.post('/logar')
+def logar_usuario(signin_data: SignInClienteRequest):
+  with Session(get_engine()) as session:
+    # pegar usuário por email
+    
+    sttm = select(Cliente).where(Cliente.email == signin_data.email)
+    cliente = session.exec(sttm).first()
+    
+    if not cliente: # não encontrou usuário
+      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+        detail='Email invalido!')
+    
+    # encontrou, então verificar a senha
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    is_correct = pwd_context.verify(signin_data.password, cliente.password)
+
+    if not is_correct:
+      raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, 
+        detail='Senha incorrenta!')
+      
+    if cliente.cod_confirmacao_email !="Confirmado":
+      raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, 
+        detail='E-mail não confirmado')
+      
+    # Tá tudo OK pode gerar um Token JWT e devolver
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES)
+    access_token = jwt.encode({'sub': cliente.email, 'exp': expires_at}, key=SECRET_KEY, algorithm=ALGORITHM)
+
+    expires_rt = datetime.now(timezone.utc) + timedelta(minutes=REFRESH_EXPIRES)
+    refresh_token = jwt.encode({'sub': cliente.email, 'exp': expires_rt}, key=SECRET_KEY, algorithm=ALGORITHM)
+    
+    return {'access_token': access_token, 'refresh_token': refresh_token}
+
+@router.get('/autenticar', response_model=Cliente)
+def autenticar_usuario(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+  return cliente
+
+@router.patch("/atualizar/{cliente_id}")
+def atualizar_usuario_por_id(
+    cliente_id: int,
+    cliente_data: UpdateClienteRequest,
+    cliente: Annotated[Cliente, Depends(get_logged_cliente)]
+):
+    if cliente.id != cliente_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+
+    with Session(get_engine()) as session:
+        sttm = select(Cliente).where(Cliente.id == cliente_id)
+        cliente_to_update = session.exec(sttm).first()
+
+        if not cliente_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado."
+            )
+        
+        if cliente_to_update.cod_confirmacao_email != "Confirmado":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, 
+                detail="E-mail não confirmado!"
+            )
+
+        # Atualizar os campos fornecidos
+        if cliente_data.nome:
+            cliente_to_update.nome = cliente_data.nome
+            
+        if cliente_data.email:
+            # Verifica duplicidade de e-mail em Cliente
+            cliente_email_query = select(Cliente).where(Cliente.email == cliente_data.email)
+            if session.exec(cliente_email_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="E-mail já cadastrado por outro usuário!"
+                )
+            
+            # Verifica duplicidade de e-mail em Admin
+            admin_email_query = select(Admin).where(Admin.email == cliente_data.email)
+            if session.exec(admin_email_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="E-mail já cadastrado por um administrador!"
+                )
+
+            # Atualizar o e-mail (mantendo o atual como "não confirmado")
+            cliente_to_update.cod_confirmacao_email = cliente_to_update.email
+            cliente_to_update.email = cliente_data.email
+
+        if cliente_data.cpf:
+            # Verifica duplicidade de CPF em Cliente
+            cliente_cpf_query = select(Cliente).where(Cliente.cpf == cliente_data.cpf)
+            if session.exec(cliente_cpf_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="CPF já cadastrado por outro usuário!"
+                )
+
+            # Verifica duplicidade de CPF em Admin
+            admin_cpf_query = select(Admin).where(Admin.cpf == cliente_data.cpf)
+            if session.exec(admin_cpf_query).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="CPF já cadastrado por um administrador!"
+                )
+
+            cliente_to_update.cpf = cliente_data.cpf
+
+        if cliente_data.data_nascimento:
+            cliente_to_update.data_nascimento = cliente_data.data_nascimento
+        if cliente_data.telefone:
+            cliente_to_update.telefone = cliente_data.telefone
+        if cliente_data.cep:
+            cliente_to_update.cep = cliente_data.cep
+        if cliente_data.password:
+            cliente_to_update.password = hash_password(cliente_data.password)
+            
+        # Salvar as alterações no banco de dados
+        session.add(cliente_to_update)
+        session.commit()
+        session.refresh(cliente_to_update)
+
+        return {"message": "Usuário atualizado com sucesso!", "cliente": cliente_to_update}
+
+@router.patch("/desativar/{cliente_id}")
+def desativar_ususarios(cliente_id: int, cliente: Annotated[Cliente, Depends(get_logged_cliente)]
+):
+    if cliente.id != cliente_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+
+    with Session(get_engine()) as session:
+        sttm = select(Cliente).where(Cliente.id == cliente_id)
+        cliente_to_update = session.exec(sttm).first()
+
+        if not cliente_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado."
+            )
+
+        cliente_to_update.status = False
+        session.add(cliente_to_update)
+        session.commit()
+        session.refresh(cliente_to_update)
+
+        return {"message": "Usuário desativado com sucesso!"}
+       
+@router.patch("/usuarios/desativar/{cliente_id}")
+def desativar_ususarios(cliente_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem desativar usuários."
+        )
+
+    with Session(get_engine()) as session:
+        sttm = select(Cliente).where(Cliente.id == cliente_id)
+        cliente_to_update = session.exec(sttm).first()
+
+        if not cliente_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado."
+            )
+
+        cliente_to_update.status = False
+        session.add(cliente_to_update)
+        session.commit()
+        session.refresh(cliente_to_update)
+
+        return {"message": "Usuário desativado com sucesso!"}
+    
+    
