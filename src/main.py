@@ -11,7 +11,7 @@ from .controllers.carrinhos_controller import router as carrinho_router
 from .controllers.pagamentos_controller import router as pagamentos_router
 
 
-from .teste.teste_numero_pedido.ok import router as teste_numero_pedido_router
+#from .teste.teste_numero_pedido.ok import router as teste_numero_pedido_router
 
 from .database import init_db
 
@@ -30,7 +30,7 @@ def create_app():
 
     # Rotas teste
 
-    app.include_router(teste_numero_pedido_router, prefix='/testes', tags=["Testes"])
+    #app.include_router(teste_numero_pedido_router, prefix='/testes', tags=["Testes"])
 
     # Rotas
     app.include_router(pagamentos_router, prefix='/pagamentos', tags=["Pagamentos"])

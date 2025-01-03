@@ -13,12 +13,14 @@ async def confirmar_pagamento(token: str):
       # Valida o token
       codigo_de_confirmacao = await verifica_pagamento(token)
       data = codigo_de_confirmacao.split('-')
-      numero_do_pedido = {
+      codigo_de_confirmacao_token = {
             "loja": data[0],
             "idcliente": int(data[1]),
             "valor": float(data[2]),
             "opcao_de_pagamento": bool(data[3]),
-            "codigo_de_confirmacao": (data[4])
+            "codigo_de_confirmacao": (data[4]),
+            "cupom_de_desconto_data": (data[5]),
+            "pontos_resgatados": int(data[6])
       }
       
-      return numero_do_pedido
+      return codigo_de_confirmacao_token

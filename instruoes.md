@@ -18,17 +18,22 @@
     pip3 install -r requirements.txt
 ```
 
-## ADD .env
+## Coamndo para cria .env *Adicione as variaveis
 
 ```
-    EMAIL=
-    KEY_EMAIL=
-    KEY_STORE=
-    SECRET_KEY= 
-    ALGORITHM= 
+    cp .envexample .env
 ```
 
-## Roda o projeto
+## Gera secure random secret key
+```sh
+    openssl rand -hex 32 # Variavel SECRET_KEY
+```
+### Examples:
+- > KEY_EMAIL= halv wpqs mgpl epxj
+- > ALGORITHM = HS256
+- > URL=http://127.0.0.1:8000
+
+## Roda o projeto *Só depois de adicionar as variaveis
 
 ```sh
     fastapi dev src/main.py

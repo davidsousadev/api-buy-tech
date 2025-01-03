@@ -1,0 +1,23 @@
+{
+    "clientName": "Thunder Client",
+    "collectionName": "CADASTROS-LOGINS",
+    "collectionId": "6a4f9a9d-bf22-4d95-86e1-5e6a7b724fc4",
+    "dateExported": "2025-01-03T13:47:00.091Z",
+    "version": "1.2",
+    "folders": [],
+    "requests": [
+        {
+            "_id": "1257e3a6-1621-4393-a315-d125d172ff72",
+            "colId": "6a4f9a9d-bf22-4d95-86e1-5e6a7b724fc4",
+            "containerId": "",
+            "name": "Teste",
+            "url": "https://www.thunderclient.com/welcome",
+            "method": "GET",
+            "sortNum": 10000,
+            "created": "2025-01-03T13:46:41.032Z",
+            "modified": "2025-01-03T13:46:41.033Z",
+            "headers": []
+        }
+    ],
+    "ref": "vzz2K3-lMALUFOXiqN7UkOUiaIpjh9Jl5sRhCv0akmYikd7F841hyETmnr8-kxU0K28CDrRIwe5fGj02w1jfoQ"
+}

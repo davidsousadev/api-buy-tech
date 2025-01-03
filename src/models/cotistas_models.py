@@ -1,66 +1,29 @@
 from pydantic import BaseModel, Field
 from datetime import date, datetime
 import datetime
-from sqlmodel import SQLModel, Field
-    
-    
-"""
-
-id
-id_cliente
-saldo
-status
-
-"""    
+from sqlmodel import SQLModel, Field  
     
 class BaseCotista(SQLModel):
-  nome: str
-  email: str
+  cliente: int = Field(default=None, foreign_key="cliente.id")
+  saldo: float
   
 # Criar cotista include BaseCotista
 class SignUpCotistaRequest(BaseCotista): 
-  cpf: int      
-  data_nascimento: str
-  telefone: str       
-  cep: int       
-  password: str
-  confirm_password: str
+  salto: float
   
 # Retorno dos dados
 class CotistaData(BaseCotista):
-  pontos_fidelidade: int
-  clube_fidelidade: bool
-  cod_indicacao: int
-  status: bool
-  admin: bool
-  cpf: int      
-  data_nascimento: str
-  telefone: str       
-  cep: int  
+  pass 
 
 # Include cotistas
 class IncludeCotista(BaseCotista): 
-  cpf: int      
-  data_nascimento: str
-  telefone: str       
-  cep: int 
+  pass
   
 # Tabela cotistas  
 class Cotista(IncludeCotista, table=True):
   id: int = Field(default=None, primary_key=True)
-  password: str
   criacao_de_conta: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
-  pontos_fidelidade: int
-  clube_fidelidade: bool
-  cod_indicacao: int
-  cod_confirmacao_email: str
   status: bool
-  admin: bool = Field(default=False) 
-
-# Login
-class SignInCotistaRequest(SQLModel):
-  email: str
-  password: str
 
 class UpdateCotistaRequest(BaseModel):
     nome: str | None = None

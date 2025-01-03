@@ -16,6 +16,8 @@ from davidsousa import enviar_email
 from src.models.emails_models import Email
 from src.html.email_confirmacao import template_confirmacao
 
+from src.models.cotistas_models import SignInCotistaRequest, SignUpCotistaRequest, Cotista, UpdateCotistaRequest, CotistaResponse
+
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')
@@ -230,6 +232,7 @@ async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None 
             session.add(cliente)
             session.commit()
             session.refresh(cliente)
+            
             return {"message": "Usuário cadastrado com sucesso! E-mail de confirmação enviado."}
         
         raise HTTPException(
@@ -263,7 +266,22 @@ def logar_usuario(signin_data: SignInClienteRequest):
       raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, 
         detail='E-mail não confirmado')
-      
+    
+    if cliente.status == False:
+      raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, 
+        detail='Conta de cliente desativada!') 
+    
+    sttm = select(Cotista).where(Cotista.cliente == cliente.id)
+    cotista_to_update = session.exec(sttm).first()
+
+    if not cotista_to_update:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuário não encontrado."
+            )
+    
+    
     # Tá tudo OK pode gerar um Token JWT e devolver
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES)
     access_token = jwt.encode({'sub': cliente.email, 'exp': expires_at}, key=SECRET_KEY, algorithm=ALGORITHM)
@@ -391,8 +409,8 @@ def desativar_ususarios(cliente_id: int, cliente: Annotated[Cliente, Depends(get
 
         return {"message": "Usuário desativado com sucesso!"}
        
-@router.patch("/usuarios/desativar/{cliente_id}")
-def desativar_ususarios(cliente_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
+@router.patch("/admin/desativar/{cliente_id}")
+def desativar_ususarios_admin(cliente_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

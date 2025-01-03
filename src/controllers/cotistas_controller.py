@@ -4,7 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
 from datetime import datetime, timedelta, timezone
-from src.auth_utils import get_logged_cotista, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
 from src.models.cotistas_models import SignInCotistaRequest, SignUpCotistaRequest, Cotista, UpdateCotistaRequest, CotistaResponse
 from src.models.admins_models import Admin
@@ -27,7 +27,7 @@ def gerar_codigo_confirmacao(tamanho=6):
         return ''.join(random.choices(caracteres, k=tamanho))
 
 @router.get("", response_model=list[CotistaResponse])
-def listar_usuarios(admin: Annotated[Admin, Depends(get_logged_admin)]):
+def listar_cotistas(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -40,10 +40,10 @@ def listar_usuarios(admin: Annotated[Admin, Depends(get_logged_admin)]):
         return [CotistaResponse.model_validate(u) for u in cotistas]
 
 @router.patch("/admin/atualizar/{cotista_id}")
-def atualizar_usuarios_por_id(
+def atualizar_cotistas_por_id(
     cotista_id: int,
     cotista_data: UpdateCotistaRequest,
-    admin: Annotated[Cotista, Depends(get_logged_admin)],
+    admin: Annotated[Admin, Depends(get_logged_admin)],
 ):
     if not admin.admin:
         raise HTTPException(
@@ -128,10 +128,10 @@ def atualizar_usuarios_por_id(
         return {"message": "Usuário atualizado com sucesso!", "cotista": cotista_to_update}
 
 @router.patch("/atualizar/{cotista_id}")
-def atualizar_usuario_por_id(
+def atualizar_cotista_por_id(
     cotista_id: int,
     cotista_data: UpdateCotistaRequest,
-    cotista: Annotated[Cotista, Depends(get_logged_cotista)]
+    cotista: Annotated[Cliente, Depends(get_logged_cliente)]
 ):
     if cotista.id != cotista_id:
         raise HTTPException(
@@ -215,55 +215,3 @@ def atualizar_usuario_por_id(
 
         return {"message": "Usuário atualizado com sucesso!", "cotista": cotista_to_update}
 
-@router.patch("/desativar/{cotista_id}")
-def desativar_ususarios(cotista_id: int, cotista: Annotated[Cotista, Depends(get_logged_cotista)]
-):
-    if cotista.id != cotista_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado!"
-        )
-
-    with Session(get_engine()) as session:
-        sttm = select(cotista).where(cotista.id == cotista_id)
-        cotista_to_update = session.exec(sttm).first()
-
-        if not cotista_to_update:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Usuário não encontrado."
-            )
-
-        cotista_to_update.status = False
-        session.add(cotista_to_update)
-        session.commit()
-        session.refresh(cotista_to_update)
-
-        return {"message": "Usuário desativado com sucesso!"}
-       
-@router.patch("/usuarios/desativar/{cotista_id}")
-def desativar_ususarios(cotista_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
-    if not admin.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado! Apenas administradores podem desativar usuários."
-        )
-
-    with Session(get_engine()) as session:
-        sttm = select(Cotista).where(Cotista.id == cotista_id)
-        cotista_to_update = session.exec(sttm).first()
-
-        if not cotista_to_update:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Usuário não encontrado."
-            )
-
-        cotista_to_update.status = False
-        session.add(cotista_to_update)
-        session.commit()
-        session.refresh(cotista_to_update)
-
-        return {"message": "Usuário desativado com sucesso!"}
-    
-    

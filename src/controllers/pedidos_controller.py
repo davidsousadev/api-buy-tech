@@ -182,12 +182,24 @@ def cadastrar_pedido(
                 session.add(cliente)
                 session.commit()
                 session.refresh(cliente)
-
+            
+            # Definir pontos de fidelidade resgatados como 0 se não existirem
+            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
+            
+            cupom_de_desconto_data = {
+                "id": cupom.id,
+                "nome": cupom.nome,
+                "tipo": cupom.tipo,
+                "valor": cupom.valor,
+                "criacao": cupom.criacao,
+                "quantidade_de_ultilizacao": cupom.quantidade_de_ultilizacao
+                } if cupom else {}
+            
             codigo_de_confirmacao = gerar_codigo_do_pedido()
             numero_do_pedido=f"{KEY_STORE}-{cliente.id}-{valor_items}"
             codigo_pedido = hash_password(codigo_de_confirmacao)
 
-            codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}"
+            codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{cupom_de_desconto_data}-{pontos_resgatados}"
 
             if pedido_data.opcao_de_pagamento==False: 
                 # Tá tudo OK pode gerar um Token JWT e devolver
@@ -204,8 +216,7 @@ def cadastrar_pedido(
                 # Gera  o link de pagamento
                 url = f"{URL}/pagamentos/{token_boleto}"
 
-            # Definir pontos de fidelidade resgatados como 0 se não existirem
-            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
+            
 
             # Cria o pedido
             pedido_atualizado = Pedido(
@@ -336,7 +347,7 @@ def cadastrar_pedido(
                 )
 
             # Aplica o cupom de desconto, se fornecido
-            if pedido_data.cupom_de_desconto:
+            if pedido_data.cupom_de_desconto and pedido_data.cupom_de_desconto != "":
                 statement = select(Cupom).where(Cupom.nome == pedido_data.cupom_de_desconto)
                 cupom = session.exec(statement).first()
                 if cupom:
@@ -364,11 +375,23 @@ def cadastrar_pedido(
                 session.refresh(cliente)
 
                 
+            # Definir pontos de fidelidade resgatados como 0 se não existirem
+            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
+            
+            cupom_de_desconto_data = {
+                "id": cupom.id,
+                "nome": cupom.nome,
+                "tipo": cupom.tipo,
+                "valor": cupom.valor,
+                "criacao": cupom.criacao,
+                "quantidade_de_ultilizacao": cupom.quantidade_de_ultilizacao
+                } if cupom else {}
+            
             codigo_de_confirmacao = gerar_codigo_do_pedido()
             numero_do_pedido=f"{KEY_STORE}-{cliente.id}-{valor_items}"
             codigo_pedido = hash_password(codigo_de_confirmacao)
 
-            codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}"
+            codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{cupom_de_desconto_data}-{pontos_resgatados}"
 
             if pedido_data.opcao_de_pagamento==False: 
                 # Tá tudo OK pode gerar um Token JWT e devolver
@@ -384,9 +407,6 @@ def cadastrar_pedido(
 
                 # Gera  o link de pagamento
                 url = f"{URL}/pagamentos/{token_boleto}"
-
-            # Definir pontos de fidelidade resgatados como 0 se não existirem
-            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
 
             # Cria o pedido
             pedido = Pedido(

@@ -123,9 +123,19 @@ def logar_admins(signin_data: SignInAdminRequest):
     sttm = select(Admin).where(Admin.email == signin_data.email)
     admin = session.exec(sttm).first()
     
-    if not admin: # não encontrou usuário
+    if not admin: # Não encontrou Administrador
       raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
-        detail='Usuário e/ou senha incorreto(S)')
+        detail='Email incorreto!')
+    
+    if admin.cod_confirmacao_email !="Confirmado":
+      raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, 
+        detail='E-mail não confirmado!')
+    
+    if admin.status == False:
+      raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST, 
+        detail='Conta de administrador desativada!') 
     
     # encontrou, então verificar a senha
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -278,4 +288,3 @@ def desativar_admins(admin_id: int, admin: Annotated[Admin, Depends(get_logged_a
         session.refresh(admin_to_update)
 
         return {"message": "Administrador desativado com sucesso!"}
-
