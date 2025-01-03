@@ -10,6 +10,7 @@ from decouple import config
 from src.database import get_engine
 from src.models.clientes_models import Cliente
 from src.models.admins_models import Admin
+from src.models.pedidos_models import Pedido
 
 SECRET_KEY = config('SECRET_KEY')
 ALGORITHM = config('ALGORITHM')
@@ -19,6 +20,7 @@ REFRESH_EXPIRES=60*24*3
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
 
 async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
+    
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
     exception = HTTPException(status_code=401, detail='Não autorizado!')
@@ -69,6 +71,47 @@ async def get_logged_admin(token: Annotated[str, Depends(oauth2_scheme)]):
 
             return admin
 
+    except ExpiredSignatureError:
+        raise expired_exception  # Token expirado
+    except InvalidTokenError:
+        raise invalid_exception  # Token inválido
+    
+async def verifica_pagamento(token: str):
+    exception = HTTPException(status_code=401, detail="Não autorizado!")
+    invalid_exception = HTTPException(status_code=401, detail="Token inválido!")
+    expired_exception = HTTPException(status_code=401, detail="Token expirado!")
+
+    try:
+        # Decodifica o token JWT
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+        # Verifica a expiração do token
+        if "exp" in payload:
+            exp = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+            if datetime.now(timezone.utc) > exp:
+                raise expired_exception
+
+        # Pega o valor do campo 'sub' no payload
+        numero_do_pedido = payload.get("sub")
+        if not numero_do_pedido:
+            raise exception
+
+        return numero_do_pedido
+
+    except InvalidTokenError:
+        raise invalid_exception
+    
+        """
+        with Session(get_engine()) as session:
+            sttm = select(Pedido).where(Pedido.cliente == numero_do_pedido)
+            pedido = session.exec(sttm).first()
+
+            if not pedido:
+                raise exception
+
+            return pedido
+        """
+        
     except ExpiredSignatureError:
         raise expired_exception  # Token expirado
     except InvalidTokenError:

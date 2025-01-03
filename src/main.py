@@ -8,6 +8,11 @@ from .controllers.categorias_controller import router as categorias_router
 from .controllers.produtos_controller import router as produtos_router
 from .controllers.pedidos_controller import router as pedidos_router
 from .controllers.carrinhos_controller import router as carrinho_router
+from .controllers.pagamentos_controller import router as pagamentos_router
+
+
+from .teste.teste_numero_pedido.ok import router as teste_numero_pedido_router
+
 from .database import init_db
 
 def create_app():
@@ -23,8 +28,12 @@ def create_app():
         allow_headers=["*"],
     )
 
+    # Rotas teste
+
+    app.include_router(teste_numero_pedido_router, prefix='/testes', tags=["Testes"])
+
     # Rotas
-    
+    app.include_router(pagamentos_router, prefix='/pagamentos', tags=["Pagamentos"])
     app.include_router(categorias_router, prefix='/categorias', tags=["Categorias"])
     app.include_router(produtos_router, prefix='/produtos', tags=["Produtos"])
     app.include_router(carrinho_router, prefix='/carrinhos', tags=["Carrinhos"])

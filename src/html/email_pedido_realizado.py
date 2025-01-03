@@ -1,13 +1,21 @@
-def template_pedido_realizado(nome, numero_pedido, url, total_pedido, detalhes_itens):
+def template_pedido_realizado(nome, numero_pedido, url, total_itens_carrinho, detalhes_itens, cupom_de_desconto=0, nome_cupom_desconto=None, pontos_fidelidade_resgatados=0):
+
+    # Calcular o total do pedido
+    total_itens = sum(item["preco"] * item["quantidade"] for item in detalhes_itens)
+    total_com_desconto = total_itens - cupom_de_desconto - pontos_fidelidade_resgatados
+
+    if total_com_desconto == total_itens_carrinho:
+        print("ok")
+
     # Gerar os detalhes dos itens
     itens_html = ""
     for item in detalhes_itens:
         itens_html += f'''
         <tr>
-            <td>{item.nome}</td>
-            <td>{item.quantidade_estoque}</td>
-            <td>R$ {item.preco:.2f}</td>
-            <td>R$ {item.preco * item.quantidade_estoque:.2f}</td>
+            <td>{item["nome"]}</td>
+            <td>{item["quantidade"]}</td>
+            <td>R$ {item["preco"]:.2f}</td>
+            <td>R$ {item["preco"] * item["quantidade"]:.2f}</td>
         </tr>
         '''
 
@@ -18,99 +26,36 @@ def template_pedido_realizado(nome, numero_pedido, url, total_pedido, detalhes_i
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmação de Pedido - Buy Tech</title>
     <style>
-        body {{
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
-            color: #333333;
-        }}
-        .email-container {{
-            max-width: 600px;
-            margin: 20px auto;
-            background-color: #ffffff;
-            border: 1px solid #dddddd;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }}
-        .email-header {{
-            background-color: #4CAF50;
-            color: #ffffff;
-            padding: 20px;
-            text-align: center;
-        }}
-        .email-body {{
-            padding: 20px;
-        }}
-        .email-footer {{
-            background-color: #f4f4f4;
-            padding: 10px;
-            text-align: center;
-            font-size: 12px;
-            color: #777777;
-        }}
-        .btn {{
-            display: inline-block;
-            background-color: #4CAF50;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            margin-top: 20px;
-            font-size: 16px;
-        }}
-        .btn:hover {{
-            background-color: #45a049;
-        }}
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }}
-        table th, table td {{
-            padding: 10px;
-            text-align: left;
-            border: 1px solid #dddddd;
-        }}
-        table th {{
-            background-color: #f4f4f4;
-        }}
+        body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; }}
+        .email-container {{ max-width: 600px; margin: auto; background-color: #fff; border-radius: 8px; padding: 20px; }}
+        .email-header {{ background-color: #4CAF50; color: #fff; padding: 20px; text-align: center; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
+        th, td {{ border: 1px solid #ddd; padding: 10px; text-align: left; }}
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="email-header">
-            <span>Buy Tech</span>
+            <h1>Buy Tech</h1>
         </div>
         <div class="email-body">
-            <h1>Pedido Realizado com Sucesso!</h1>
-            <p>Olá, {nome},</p>
-            <p>Obrigado por fazer um pedido conosco! Seguem os detalhes do seu pedido:</p>
+            <h2>Olá, {nome}</h2>
+            <p>Seu pedido foi realizado com sucesso! Seguem os detalhes:</p>
             <p><strong>Número do Pedido:</strong> {numero_pedido}</p>
-            <p><strong>Total:</strong> R$ {total_pedido:.2f}</p>
-            
-            <h2>Itens do Pedido</h2>
+            <p><strong>Total dos Itens:</strong> R$ {total_itens:.2f}</p>
+            <p><strong>Desconto:</strong> R$ {cupom_de_desconto:.2f} ({nome_cupom_desconto or 'Sem cupom'})</p>
+            <p><strong>Total com Desconto:</strong> R$ {total_com_desconto:.2f}</p>
+            <h3>Itens do Pedido</h3>
             <table>
-                <thead>
-                    <tr>
-                        <th>Produto</th>
-                        <th>Quantidade</th>
-                        <th>Preço Unitário</th>
-                        <th>Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {itens_html}
-                </tbody>
+                <tr>
+                    <th>Produto</th>
+                    <th>Quantidade</th>
+                    <th>Preço Unitário</th>
+                    <th>Subtotal</th>
+                </tr>
+                {itens_html}
             </table>
-
-            <p>Estamos processando o seu pedido e em breve ele será enviado.</p>
-            <p>Para realizar o pagamento, por favor, clique no botão abaixo:</p>
-            <a href="{url}" class="btn">Efetuar Pagamento</a>
-        </div>
-        <div class="email-footer">
-            <p>&copy; 2024 Buy Tech. Todos os direitos reservados.</p>
+            <a href="{url}" style="display: block; background-color: #4CAF50; color: #fff; text-align: center; padding: 10px; border-radius: 5px; text-decoration: none;">Efetuar Pagamento</a>
         </div>
     </div>
 </body>

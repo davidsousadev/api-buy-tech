@@ -23,7 +23,7 @@
 ```
     EMAIL=
     KEY_EMAIL=
-    KEY_POST_EMAIL=
+    KEY_STORE=
     SECRET_KEY= 
     ALGORITHM= 
 ```

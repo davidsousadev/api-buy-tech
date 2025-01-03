@@ -188,7 +188,7 @@ def atualizar_item_no_carrinho_por_id(
         if item_to_update.status==True:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Item não pode ser atualizado."
+                detail="Item não pode ser atualizado pois já esta em pedido."
             )
             
         # Atualizar os campos fornecidos
