@@ -10,10 +10,11 @@ from src.models.admins_models import SignInAdminRequest, SignUpAdminRequest, Adm
 from src.models.clientes_models import Cliente
 from passlib.context import CryptContext
 import jwt
-from decouple import config
+
 from davidsousa import enviar_email
 from src.models.emails_models import Email
 from src.html.email_confirmacao import template_confirmacao
+from decouple import config
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')

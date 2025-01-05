@@ -100,17 +100,6 @@ async def verifica_pagamento(token: str):
 
     except InvalidTokenError:
         raise invalid_exception
-    
-        """
-        with Session(get_engine()) as session:
-            sttm = select(Pedido).where(Pedido.cliente == numero_do_pedido)
-            pedido = session.exec(sttm).first()
-
-            if not pedido:
-                raise exception
-
-            return pedido
-        """
         
     except ExpiredSignatureError:
         raise expired_exception  # Token expirado

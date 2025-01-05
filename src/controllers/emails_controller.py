@@ -65,8 +65,6 @@ def email_confirmado(codigo: str):
             session.commit()
             session.refresh(admin_to_update)
             
-        
-
         return {"email": True}
     
 # Recuperar email

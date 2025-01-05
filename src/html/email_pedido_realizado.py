@@ -1,15 +1,11 @@
-def template_pedido_realizado(nome, numero_pedido, url, total_itens_carrinho, detalhes_itens, cupom_de_desconto=0, nome_cupom_desconto=None, pontos_fidelidade_resgatados=0):
-
-    # Calcular o total do pedido
-    total_itens = sum(item["preco"] * item["quantidade"] for item in detalhes_itens)
-    total_com_desconto = total_itens - cupom_de_desconto - pontos_fidelidade_resgatados
-
-    if total_com_desconto == total_itens_carrinho:
-        print("ok")
+def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, desconto=0, nome_cupom=None, pontos_resgatados=0):
+    # Calcular o total dos itens do pedido
+    total_itens = sum(item["preco"] * item["quantidade"] for item in itens_carrinho)
+    total_com_desconto = max(total_itens - desconto - pontos_resgatados, 0)
 
     # Gerar os detalhes dos itens
     itens_html = ""
-    for item in detalhes_itens:
+    for item in itens_carrinho:
         itens_html += f'''
         <tr>
             <td>{item["nome"]}</td>
@@ -19,6 +15,7 @@ def template_pedido_realizado(nome, numero_pedido, url, total_itens_carrinho, de
         </tr>
         '''
 
+    # Retornar o template HTML do pedido
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -43,7 +40,7 @@ def template_pedido_realizado(nome, numero_pedido, url, total_itens_carrinho, de
             <p>Seu pedido foi realizado com sucesso! Seguem os detalhes:</p>
             <p><strong>Número do Pedido:</strong> {numero_pedido}</p>
             <p><strong>Total dos Itens:</strong> R$ {total_itens:.2f}</p>
-            <p><strong>Desconto:</strong> R$ {cupom_de_desconto:.2f} ({nome_cupom_desconto or 'Sem cupom'})</p>
+            <p><strong>Desconto:</strong> R$ {desconto:.2f} ({nome_cupom or 'Sem cupom'})</p>
             <p><strong>Total com Desconto:</strong> R$ {total_com_desconto:.2f}</p>
             <h3>Itens do Pedido</h3>
             <table>

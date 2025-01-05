@@ -6,7 +6,7 @@ from src.auth_utils import get_logged_admin, get_logged_cliente
 from src.database import get_engine
 from src.models.pedidos_models import BasePedido, Pedido, UpdatePedidoRequest
 from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password
-from src.models.carrinho_models import Carrinho
+from src.models.carrinhos_models import Carrinho
 from src.models.produtos_models import Produto
 from src.models.clientes_models import Cliente
 from src.models.admins_models import Admin
@@ -95,394 +95,162 @@ def cadastrar_pedido(
 
         # Verifica pedidos não pagos do cliente
         pedidos = select(Pedido).where(Pedido.cliente == cliente.id)
-        pedidos_em_aberto = session.exec(pedidos).first()
-        if pedidos_em_aberto and pedidos_em_aberto.status is False and pedidos_em_aberto.codigo != "":
+        pedidos_do_cliente = session.exec(pedidos).all()
+        pedido_em_aberto = False
+        for pedido in pedidos_do_cliente:
+            if pedido.status==True and len(pedido.codigo) !=6:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cliente tem pedidos não pagos."
+                )
+            if not pedido.status and not pedido.codigo:
+                pedido_em_aberto = pedido
+
+        # Verifica os itens no carrinho do cliente
+        statement = select(Carrinho).where(Carrinho.cliente_id == cliente.id)
+        itens = session.exec(statement).all()
+        if not itens:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="O carrinho está vazio."
+            )
+
+        # Inicializa variáveis para o cálculo do total
+        itens_carrinho = []
+        ids_itens_carrinho = []
+        valor_items = 0
+
+        for item in itens:
+            if not item.status:
+                produto_sttm = select(Produto).where(Produto.id == item.produto_codigo)
+                produto = session.exec(produto_sttm).first()
+                if not produto:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Produto com código {item.produto_codigo} não encontrado."
+                    )
+                if produto.quantidade_estoque < item.quantidade:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Quantidade solicitada para o produto '{produto.nome}' excede o estoque disponível!"
+                    )
+                valor_items += item.preco * item.quantidade
+                itens_carrinho.append({"nome": produto.nome, "quantidade": item.quantidade, "preco": item.preco})
+                ids_itens_carrinho.append(item.produto_codigo)
+
+        if valor_items == 0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cliente tem pedidos não pagos."
+                detail="Os itens do carrinho já estão em pedido."
             )
+
+        # Aplica o cupom de desconto, se fornecido
+        desconto = 0
+        if pedido_data.cupom_de_desconto:
+            statement = select(Cupom).where(Cupom.nome == pedido_data.cupom_de_desconto)
+            cupom = session.exec(statement).first()
+            if cupom:
+                if cupom.quantidade_de_utilizacao == 0:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="A quantidade máxima de cupons já foi resgatada."
+                    )
+                valor_cupom = cupom.valor
+                tipo = cupom.tipo  # False para porcentagem, True para valor fixo
+
+                if tipo is False:
+                    desconto = valor_items * (valor_cupom / 100)
+                else:
+                    desconto = valor_cupom
+                valor_items = max(valor_items - desconto, 0)
+            else:
+                pedido_data.cupom_de_desconto = ""
+
+        # Aplica pontos de fidelidade
+        pontos_fidelidade_resgatados = min(cliente.pontos_fidelidade, int(valor_items))
+        valor_items -= pontos_fidelidade_resgatados
+        cliente.pontos_fidelidade -= pontos_fidelidade_resgatados
+        session.add(cliente)
+        session.commit()
+
+        # Gera código de confirmação
+        codigo_de_confirmacao = gerar_codigo_do_pedido()
+        numero_do_pedido = f"{KEY_STORE}-{cliente.id}-{valor_items}"
+        codigo_pedido = hash_password(codigo_de_confirmacao)
+        codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{pedido_data.cupom_de_desconto}-{pontos_fidelidade_resgatados}"
+
+        # Gera token de pagamento
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES if pedido_data.opcao_de_pagamento else REFRESH_EXPIRES)
         
-        if pedidos_em_aberto and pedidos_em_aberto.status is False and pedidos_em_aberto.codigo == "":
-            # Verifica os itens no carrinho do cliente
-            statement = select(Carrinho).where(Carrinho.cliente_id == cliente.id)
-            itens = session.exec(statement).all()
-            if not itens:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="O carrinho está vazio."
-                )
+        token_pagamento = jwt.encode({'sub': codigo_de_confirmacao_token, 'exp': expires_at}, key=SECRET_KEY, algorithm=ALGORITHM)
+        
+        url_pagamento = f"{URL}/operacoes/pagamentos/{token_pagamento}"
 
-            # Inicializa variáveis para o cálculo do total
-            itens_carrinho = []
-            ids_itens_carrinho = []
-            valor_items = 0
-            quantidade = 0
-
-            for item in itens:
-                if item.status is False:
-                    # Verifica se o produto está disponível
-                    produto_sttm = select(Produto).where(Produto.id == item.produto_codigo)
-                    produto = session.exec(produto_sttm).first()
-                    if not produto:
-                        raise HTTPException(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Produto com código {item.produto_codigo} não encontrado."
-                        )
-                    if produto.quantidade_estoque == 0:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Produto '{produto.nome}' sem estoque!"
-                        )
-                    if produto.quantidade_estoque < item.quantidade:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Quantidade solicitada para o produto '{produto.nome}' excede o estoque disponível!"
-                        )
-
-                    # Atualiza variáveis
-                    quantidade += 1
-                    itens_carrinho.append({
-                        "nome": produto.nome,
-                        "quantidade": item.quantidade,
-                        "preco": item.preco
-                        })
-                    ids_itens_carrinho.append(item.produto_codigo)
-                    valor_items += item.preco * item.quantidade 
-
-            if quantidade == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Os itens do carrinho já estão em pedido."
-                )
-
-            # Aplica o cupom de desconto, se fornecido
-            if pedido_data.cupom_de_desconto:
-                statement = select(Cupom).where(Cupom.nome == pedido_data.cupom_de_desconto)
-                cupom = session.exec(statement).first()
-                if cupom:
-                    valor_cupom = cupom.valor
-                    tipo = cupom.tipo  # False para porcentagem, True para valor fixo
-
-                    if tipo is False:
-                        desconto = valor_items * (valor_cupom / 100)
-                    else:
-                        desconto = valor_cupom
-
-                    valor_items = max(valor_items - desconto, 0)
-                else:
-                    pedido_data.cupom_de_desconto = ""
-            else:
-                pedido_data.cupom_de_desconto = ""
-
-            # Aplicar pontos de fidelidade
-            if valor_items > 0:
-                pontos_fidelidade_resgatados = min(cliente.pontos_fidelidade, int(valor_items))
-                valor_items -= pontos_fidelidade_resgatados
-                cliente.pontos_fidelidade -= pontos_fidelidade_resgatados
-                session.add(cliente)
-                session.commit()
-                session.refresh(cliente)
-            
-            # Definir pontos de fidelidade resgatados como 0 se não existirem
-            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
-            
-            cupom_de_desconto_data = {
-                "id": cupom.id,
-                "nome": cupom.nome,
-                "tipo": cupom.tipo,
-                "valor": cupom.valor,
-                "criacao": cupom.criacao,
-                "quantidade_de_ultilizacao": cupom.quantidade_de_ultilizacao
-                } if cupom else {}
-            
-            codigo_de_confirmacao = gerar_codigo_do_pedido()
-            numero_do_pedido=f"{KEY_STORE}-{cliente.id}-{valor_items}"
-            codigo_pedido = hash_password(codigo_de_confirmacao)
-
-            codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{cupom_de_desconto_data}-{pontos_resgatados}"
-
-            if pedido_data.opcao_de_pagamento==False: 
-                # Tá tudo OK pode gerar um Token JWT e devolver
-                expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES)
-                token_pix = jwt.encode({'sub': codigo_de_confirmacao_token, 'exp': expires_at}, key=SECRET_KEY, algorithm=ALGORITHM)
-
-                # Gera  o link de pagamento
-                url = f"{URL}/pagamentos/{token_pix}"
-
-            if pedido_data.opcao_de_pagamento==True:    
-                expires_rt = datetime.now(timezone.utc) + timedelta(minutes=REFRESH_EXPIRES)
-                token_boleto = jwt.encode({'sub': codigo_de_confirmacao_token, 'exp': expires_rt}, key=SECRET_KEY, algorithm=ALGORITHM)
-
-                # Gera  o link de pagamento
-                url = f"{URL}/pagamentos/{token_boleto}"
-
-            
-
-            # Cria o pedido
-            pedido_atualizado = Pedido(
-                cliente=pedido_data.cliente,
-                produtos=f"{ids_itens_carrinho}",
-                cupom_de_desconto=pedido_data.cupom_de_desconto,
-                pontos_fidelidade_resgatados=pontos_resgatados,
-                status=True,
-                opcao_de_pagamento=pedido_data.opcao_de_pagamento,
-                codigo=codigo_pedido,
-                total=valor_items
-            )
-
-
-            session.add(pedido_atualizado)
-            session.commit()
-            session.refresh(pedido_atualizado)
-
-            # Atualiza o status dos itens no carrinho para vinculá-los ao pedido
-            for item in itens:
-                if item.status is False:
-                    item.status = True
-                    session.add(item)
-                    session.commit()
-                    session.refresh(item)
-
-            # Definir valores padrão caso cupom ou pontos não existam
-            nome_cupom = cupom.nome if cupom else None
-            desconto = desconto if cupom else 0
-            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
-
-            # Ajustar quantidades dos produtos, ajustar dados de envio dos produtos
-            corpo_do_pedido = template_pedido_realizado(
-                cliente.nome,
-                numero_do_pedido,
-                url,
-                valor_items,
-                itens_carrinho,
-                desconto,
-                nome_cupom,
-                pontos_resgatados
-            )
-            # Envia o e-mail de confirmação
-            email = Email(
-                nome_remetente="Buy Tech",
-                remetente=EMAIL,
-                senha=KEY_EMAIL,
-                destinatario=cliente.email,
-                assunto="Pedido - Buy Tech",
-                corpo=corpo_do_pedido
-            )
-
-            envio = enviar_email(
-                email.nome_remetente, 
-                email.remetente, 
-                email.senha, 
-                email.destinatario, 
-                email.assunto, 
-                email.corpo, 
-                importante=True,
-                html=True
-            )
-
-            if envio:
-                session.add(cliente)
-                session.commit()
-                session.refresh(cliente)
-                return {"message": "Pedido realizado com sucesso! E-mail com dados enviado."}
-
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Erro ao enviar o e-mail de confirmação."
-            ) 
-         
-            
-        if not pedidos_em_aberto:
-            # Verifica os itens no carrinho do cliente
-            statement = select(Carrinho).where(Carrinho.cliente_id == cliente.id)
-            itens = session.exec(statement).all()
-            if not itens:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="O carrinho está vazio."
-                )
-
-            # Inicializa variáveis para o cálculo do total
-            itens_carrinho = []
-            ids_itens_carrinho = []
-            valor_items = 0
-            quantidade = 0
-
-            for item in itens:
-                if item.status is False:
-                    # Verifica se o produto está disponível
-                    produto_sttm = select(Produto).where(Produto.id == item.produto_codigo)
-                    produto = session.exec(produto_sttm).first()
-                    if not produto:
-                        raise HTTPException(
-                            status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"Produto com código {item.produto_codigo} não encontrado."
-                        )
-                    if produto.quantidade_estoque == 0:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Produto '{produto.nome}' sem estoque!"
-                        )
-                    if produto.quantidade_estoque < item.quantidade:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"Quantidade solicitada para o produto '{produto.nome}' excede o estoque disponível!"
-                        )
-
-                    # Atualiza variáveis
-                    quantidade += 1
-                    itens_carrinho.append({
-                        "nome": produto.nome,
-                        "quantidade": item.quantidade,
-                        "preco": item.preco
-                        })
-                    
-                    ids_itens_carrinho.append(item.produto_codigo)
-                    valor_items += item.preco * item.quantidade 
-
-            if quantidade == 0:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Os itens do carrinho já estão em pedido."
-                )
-
-            # Aplica o cupom de desconto, se fornecido
-            if pedido_data.cupom_de_desconto and pedido_data.cupom_de_desconto != "":
-                statement = select(Cupom).where(Cupom.nome == pedido_data.cupom_de_desconto)
-                cupom = session.exec(statement).first()
-                if cupom:
-                    valor_cupom = cupom.valor
-                    tipo = cupom.tipo  # False para porcentagem, True para valor fixo
-
-                    if tipo is False:
-                        desconto = valor_items * (valor_cupom / 100)
-                    else:
-                        desconto = valor_cupom
-
-                    valor_items = max(valor_items - desconto, 0)
-                else:
-                    pedido_data.cupom_de_desconto = ""
-            else:
-                pedido_data.cupom_de_desconto = ""
-            
-            # Aplicar pontos de fidelidade
-            if valor_items > 0:
-                pontos_fidelidade_resgatados = min(cliente.pontos_fidelidade, int(valor_items))
-                valor_items -= pontos_fidelidade_resgatados
-                cliente.pontos_fidelidade -= pontos_fidelidade_resgatados
-                session.add(cliente)
-                session.commit()
-                session.refresh(cliente)
-
-                
-            # Definir pontos de fidelidade resgatados como 0 se não existirem
-            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
-            
-            cupom_de_desconto_data = {
-                "id": cupom.id,
-                "nome": cupom.nome,
-                "tipo": cupom.tipo,
-                "valor": cupom.valor,
-                "criacao": cupom.criacao,
-                "quantidade_de_ultilizacao": cupom.quantidade_de_ultilizacao
-                } if cupom else {}
-            
-            codigo_de_confirmacao = gerar_codigo_do_pedido()
-            numero_do_pedido=f"{KEY_STORE}-{cliente.id}-{valor_items}"
-            codigo_pedido = hash_password(codigo_de_confirmacao)
-
-            codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{cupom_de_desconto_data}-{pontos_resgatados}"
-
-            if pedido_data.opcao_de_pagamento==False: 
-                # Tá tudo OK pode gerar um Token JWT e devolver
-                expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES)
-                token_pix = jwt.encode({'sub': codigo_de_confirmacao_token, 'exp': expires_at}, key=SECRET_KEY, algorithm=ALGORITHM)
-
-                # Gera  o link de pagamento
-                url = f"{URL}/pagamentos/{token_pix}"
-
-            if pedido_data.opcao_de_pagamento==True:    
-                expires_rt = datetime.now(timezone.utc) + timedelta(minutes=REFRESH_EXPIRES)
-                token_boleto = jwt.encode({'sub': codigo_de_confirmacao_token, 'exp': expires_rt}, key=SECRET_KEY, algorithm=ALGORITHM)
-
-                # Gera  o link de pagamento
-                url = f"{URL}/pagamentos/{token_boleto}"
-
-            # Cria o pedido
+        # Cria ou atualiza o pedido
+        if not pedido_em_aberto:
+            # Criar novo pedido
             pedido = Pedido(
                 cliente=pedido_data.cliente,
                 produtos=f"{ids_itens_carrinho}",
                 cupom_de_desconto=pedido_data.cupom_de_desconto,
-                pontos_fidelidade_resgatados=pontos_resgatados,
+                pontos_fidelidade_resgatados=pontos_fidelidade_resgatados,
                 status=True,
                 opcao_de_pagamento=pedido_data.opcao_de_pagamento,
                 codigo=codigo_pedido,
                 total=valor_items
             )
-
-            
-
             session.add(pedido)
-            session.commit()
-            session.refresh(pedido)
+        else:
+            # Atualizar pedido em aberto
+            pedido_em_aberto.produtos = f"{ids_itens_carrinho}"
+            pedido_em_aberto.total = valor_items
+            pedido_em_aberto.cupom_de_desconto = pedido_data.cupom_de_desconto
+            pedido_em_aberto.pontos_fidelidade_resgatados = pontos_fidelidade_resgatados
+            pedido_em_aberto.opcao_de_pagamento = pedido_data.opcao_de_pagamento
+            session.add(pedido_em_aberto)
+        session.commit()
 
-            # Atualiza o status dos itens no carrinho para vinculá-los ao pedido
-            for item in itens:
-                if item.status is False:
-                    item.status = True
-                    session.add(item)
-                    session.commit()
-                    session.refresh(item)
-                    
-            # Definir valores padrão caso cupom ou pontos não existam
-            nome_cupom = cupom.nome if cupom else None
-            desconto = desconto if cupom else 0
-            pontos_resgatados = pontos_fidelidade_resgatados if pontos_fidelidade_resgatados else 0
+        # Atualiza status dos itens no carrinho
+        for item in itens:
+            if not item.status:
+                item.status = True
+                session.add(item)
+        session.commit()
 
-            # Ajustar quantidades dos produtos, ajustar dados de envio dos produtos
-            corpo_do_pedido = template_pedido_realizado(
-                cliente.nome,
-                numero_do_pedido,
-                url,
-                valor_items,
-                itens_carrinho,
-                desconto,
-                nome_cupom,
-                pontos_resgatados
-            )
-            
-            # Envia o e-mail de confirmação
-            email = Email(
-                nome_remetente="Buy Tech",
-                remetente=EMAIL,
-                senha=KEY_EMAIL,
-                destinatario=cliente.email,
-                assunto="Pedido - Buy Tech",
-                corpo=corpo_do_pedido
-            )
-
-            envio = enviar_email(
-                email.nome_remetente, 
-                email.remetente, 
-                email.senha, 
-                email.destinatario, 
-                email.assunto, 
-                email.corpo, 
-                importante=True,
-                html=True
-            )
-
-            if envio:
-                session.add(cliente)
-                session.commit()
-                session.refresh(cliente)
-                return {"message": "Pedido realizado com sucesso! E-mail com dados enviado."}
-
+        # Envia e-mail de confirmação
+        corpo_do_pedido = template_pedido_realizado(
+            cliente.nome, 
+            numero_do_pedido, 
+            url_pagamento, 
+            itens_carrinho, 
+            desconto, 
+            pedido_data.cupom_de_desconto, 
+            pontos_fidelidade_resgatados)
+        
+        email = Email(
+            nome_remetente="Buy Tech",
+            remetente=EMAIL,
+            senha=KEY_EMAIL,
+            destinatario=cliente.email,
+            assunto="Pedido - Buy Tech",
+            corpo=corpo_do_pedido
+        )
+        envio = enviar_email(email.nome_remetente, 
+                             email.remetente, 
+                             email.senha, 
+                             email.destinatario, 
+                             email.assunto, 
+                             email.corpo, 
+                             importante=True, 
+                             html=True)
+        if envio:
+            return {"message": "Pedido realizado com sucesso! E-mail com dados enviado."}
+        else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Erro ao enviar o e-mail de confirmação."
-            )    
-     
+            )
+                       
 @router.patch("/{pedido_id}")
 def cancelar_pedido_por_id(
     pedido_id: int,
@@ -519,6 +287,24 @@ def cancelar_pedido_por_id(
                 session.add(pedido)
                 session.commit()
                 session.refresh(pedido)  
+        
+        if pedido.cupom_de_desconto != "":
+            # Verifica se o cliente existe
+            sttm = select(Cupom).where(Cupom.nome == pedido.cupom_de_desconto)
+            cupom_de_desconto_resgatado = session.exec(sttm).first()
+            if not cupom_de_desconto_resgatado:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Cupom não encontrado."
+                )
+            
+            if cupom_de_desconto_resgatado:
+                cupom_de_desconto_resgatado.quantidade_de_ultilizacao -= 1
+                
+                # Salvar as alterações no banco de dados
+                session.add(pedido)
+                session.commit()
+                session.refresh(pedido)
                   
         # Verificar condições do pedido
         if pedido.status and len(pedido.codigo) != 6:

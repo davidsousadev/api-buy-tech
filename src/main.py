@@ -8,7 +8,7 @@ from .controllers.categorias_controller import router as categorias_router
 from .controllers.produtos_controller import router as produtos_router
 from .controllers.pedidos_controller import router as pedidos_router
 from .controllers.carrinhos_controller import router as carrinho_router
-from .controllers.pagamentos_controller import router as pagamentos_router
+from .controllers.operacoes_controller import router as operacoes_router
 
 
 #from .teste.teste_numero_pedido.ok import router as teste_numero_pedido_router
@@ -33,16 +33,15 @@ def create_app():
     #app.include_router(teste_numero_pedido_router, prefix='/testes', tags=["Testes"])
 
     # Rotas
-    app.include_router(pagamentos_router, prefix='/pagamentos', tags=["Pagamentos"])
+    app.include_router(admins_router, prefix='/admins', tags=["Admins"])
+    app.include_router(clientes_router, prefix='/clientes', tags=["Clientes"])
+    app.include_router(email_router, prefix='/emails', tags=["E-mails"])
     app.include_router(categorias_router, prefix='/categorias', tags=["Categorias"])
+    app.include_router(cupons_router, prefix='/cupons', tags=["Cupons"])
     app.include_router(produtos_router, prefix='/produtos', tags=["Produtos"])
     app.include_router(carrinho_router, prefix='/carrinhos', tags=["Carrinhos"])
     app.include_router(pedidos_router, prefix='/pedidos', tags=["Pedidos"])
-    app.include_router(email_router, prefix='/emails', tags=["E-mails"])
-    app.include_router(clientes_router, prefix='/clientes', tags=["Clientes"])
-    app.include_router(admins_router, prefix='/admins', tags=["Admins"])
-    app.include_router(cupons_router, prefix='/cupons', tags=["Cupons"])
-    
+    app.include_router(operacoes_router, prefix='/operacoes', tags=["Operações"])
     
     # Inicia o banco
     init_db()

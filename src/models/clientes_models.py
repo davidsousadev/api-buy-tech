@@ -18,6 +18,7 @@ class SignUpClienteRequest(BaseCliente):
   cep: int       
   password: str
   confirm_password: str
+  endereco: str
   
 # Retorno dos dados
 class ClienteData(BaseCliente):
@@ -38,12 +39,13 @@ class IncludeCliente(BaseCliente):
   telefone: str       
   cep: int 
   
+  
 # Tabela clientes  
 class Cliente(IncludeCliente, table=True):
   id: int = Field(default=None, primary_key=True)
   password: str
   criacao_de_conta: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
-  pontos_fidelidade: int
+  pontos_fidelidade: float
   clube_fidelidade: bool
   cod_indicacao: int
   cod_confirmacao_email: str
@@ -62,6 +64,7 @@ class UpdateClienteRequest(BaseModel):
     data_nascimento: str | None = None
     telefone: str | None = None
     cep: int | None = None
+    endereco: str | None = None
     password: str | None = None
 
 # Lista de usuarios

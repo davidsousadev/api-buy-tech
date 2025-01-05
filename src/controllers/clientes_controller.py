@@ -16,8 +16,6 @@ from davidsousa import enviar_email
 from src.models.emails_models import Email
 from src.html.email_confirmacao import template_confirmacao
 
-from src.models.cotistas_models import SignInCotistaRequest, SignUpCotistaRequest, Cotista, UpdateCotistaRequest, CotistaResponse
-
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')
@@ -120,6 +118,8 @@ def atualizar_usuarios_por_id(
             cliente_to_update.telefone = cliente_data.telefone
         if cliente_data.cep:
             cliente_to_update.cep = cliente_data.cep
+        if cliente_data.endereco:
+            cliente_to_update.endereco = cliente_data.endereco
         if cliente_data.password:
             cliente_to_update.password = hash_password(cliente_data.password)
             
@@ -180,12 +180,16 @@ async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None 
 
         # Hash da senha
         hash = hash_password(cliente_data.password)
-        link = 0
-
-        if ref is not None:
-            link = ref
-
         codigo = gerar_codigo_confirmacao()
+        
+        if ref is not None:
+            # Verifica codigo de indicacao
+            sttm = select(Cliente).where(Cliente.id == ref)
+            cliente_referenciado = session.exec(sttm).first()
+            if cliente_referenciado:
+                link = ref
+        else:
+            link = 0
 
         # Criação do usuário
         cliente = Cliente(
@@ -197,6 +201,7 @@ async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None 
             data_nascimento=cliente_data.data_nascimento,
             telefone=cliente_data.telefone,
             cep=cliente_data.cep,
+            endereco=cliente_data.endereco,
             pontos_fidelidade=0,
             clube_fidelidade=False,
             cod_indicacao=link,
@@ -271,15 +276,6 @@ def logar_usuario(signin_data: SignInClienteRequest):
       raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, 
         detail='Conta de cliente desativada!') 
-    
-    sttm = select(Cotista).where(Cotista.cliente == cliente.id)
-    cotista_to_update = session.exec(sttm).first()
-
-    if not cotista_to_update:
-        raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Usuário não encontrado."
-            )
     
     
     # Tá tudo OK pode gerar um Token JWT e devolver
@@ -373,6 +369,8 @@ def atualizar_usuario_por_id(
             cliente_to_update.telefone = cliente_data.telefone
         if cliente_data.cep:
             cliente_to_update.cep = cliente_data.cep
+        if cliente_data.endereco:
+            cliente_to_update.endereco = cliente_data.endereco
         if cliente_data.password:
             cliente_to_update.password = hash_password(cliente_data.password)
             

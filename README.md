@@ -2,6 +2,7 @@
 
 # Próximos passos
 
+- > Calcular o frete e aplicar clube fidelidade para quem comprou 5 vezes no mes
 - > Implementar os testes urgentemente
 - > Refatorar a documentação das rotas, install, requeriments e o proprio README.md
 - > Refatorar o cupom de desconto para quantidade disponivel, ultilizada, e registro de que usou

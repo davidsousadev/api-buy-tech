@@ -4,7 +4,7 @@ from sqlmodel import Session, select, and_
 from src.auth_utils import get_logged_admin, get_logged_cliente
 from src.database import get_engine
 from src.models.clientes_models import Cliente
-from src.models.carrinho_models import Carrinho, BaseCarrinho, UpdateCarrinhoRequest
+from src.models.carrinhos_models import Carrinho, BaseCarrinho, UpdateCarrinhoRequest
 from src.models.produtos_models import Produto
 from src.models.admins_models import Admin
 
@@ -128,6 +128,11 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Item já está em pedido e não foi pago!"
+            )
+        if carrinho and carrinho.status==True and len(carrinho.codigo) > 6:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Item já foi pago!"
             )
         else:
             carrinho = Carrinho(
