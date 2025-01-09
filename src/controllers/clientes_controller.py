@@ -27,6 +27,41 @@ def gerar_codigo_confirmacao(tamanho=6):
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
 
+
+# Endpoint para verificar duplicidade de email
+@router.get("/verificar-email")
+async def verificar_email(email: str):
+    with Session(get_engine()) as session:
+        # Verifica duplicidade em clientes
+        statement = select(Cliente).where(Cliente.email == email)
+        cliente = session.exec(statement).first()
+
+        # Verifica duplicidade em admins
+        statement_admin = select(Admin).where(Admin.email == email)
+        admin = session.exec(statement_admin).first()
+
+        if cliente or admin:
+            raise HTTPException(status_code=400, detail="Email já cadastrado.")
+
+    return {"message": "Email disponível."}
+
+# Endpoint para verificar duplicidade de CPF
+@router.get("/verificar-cpf")
+async def verificar_cpf(cpf: str):
+    with Session(get_engine()) as session:
+        # Verifica duplicidade em clientes
+        statement = select(Cliente).where(Cliente.cpf == cpf)
+        cliente = session.exec(statement).first()
+
+        # Verifica duplicidade em admins
+        statement_admin = select(Admin).where(Admin.cpf == cpf)
+        admin = session.exec(statement_admin).first()
+
+        if cliente or admin:
+            raise HTTPException(status_code=400, detail="CPF já cadastrado.")
+
+    return {"message": "CPF disponível."}
+
 @router.get("", response_model=list[ClienteResponse])
 def listar_usuarios(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
@@ -202,7 +237,6 @@ async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None 
             complemento=cliente_data.complemento,
             telefone=cliente_data.telefone,
             cep=cliente_data.cep,
-            complemento=cliente_data.complemento,
             pontos_fidelidade=0,
             clube_fidelidade=False,
             cod_indicacao=link,
