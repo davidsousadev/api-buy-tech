@@ -13,7 +13,8 @@ class SignUpAdminRequest(BaseAdmin):
   cpf: int      
   data_nascimento: str
   telefone: str       
-  cep: int       
+  cep: int 
+  complemento: str      
   password: str
   confirm_password: str
   
@@ -27,7 +28,8 @@ class AdminData(BaseAdmin):
   cpf: int      
   data_nascimento: str
   telefone: str       
-  cep: int  
+  cep: int 
+  complemento: str 
 
 # Include Admin
 class IncludeAdmin(BaseAdmin): 
@@ -35,6 +37,7 @@ class IncludeAdmin(BaseAdmin):
   data_nascimento: str
   telefone: str       
   cep: int 
+  complemento: str
   
 # Tabela Admin  
 class Admin(IncludeAdmin, table=True):
@@ -60,6 +63,7 @@ class UpdateAdminRequest(BaseModel):
     data_nascimento: str | None = None
     telefone: str | None = None
     cep: int | None = None
+    complemento: str | None = None
     password: str | None = None
 
 # Lista de usuarios

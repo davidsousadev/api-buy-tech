@@ -118,8 +118,8 @@ def atualizar_usuarios_por_id(
             cliente_to_update.telefone = cliente_data.telefone
         if cliente_data.cep:
             cliente_to_update.cep = cliente_data.cep
-        if cliente_data.endereco:
-            cliente_to_update.endereco = cliente_data.endereco
+        if cliente_data.complemento:
+            cliente_to_update.complemento = cliente_data.complemento
         if cliente_data.password:
             cliente_to_update.password = hash_password(cliente_data.password)
             
@@ -199,9 +199,10 @@ async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None 
             password=hash,
             cpf=cliente_data.cpf,
             data_nascimento=cliente_data.data_nascimento,
+            complemento=cliente_data.complemento,
             telefone=cliente_data.telefone,
             cep=cliente_data.cep,
-            endereco=cliente_data.endereco,
+            complemento=cliente_data.complemento,
             pontos_fidelidade=0,
             clube_fidelidade=False,
             cod_indicacao=link,
@@ -369,8 +370,8 @@ def atualizar_usuario_por_id(
             cliente_to_update.telefone = cliente_data.telefone
         if cliente_data.cep:
             cliente_to_update.cep = cliente_data.cep
-        if cliente_data.endereco:
-            cliente_to_update.endereco = cliente_data.endereco
+        if cliente_data.complemento:
+            cliente_to_update.complemento = cliente_data.complemento
         if cliente_data.password:
             cliente_to_update.password = hash_password(cliente_data.password)
             

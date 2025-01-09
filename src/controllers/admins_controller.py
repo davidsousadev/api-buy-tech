@@ -72,6 +72,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
                 password=hash,
                 cpf=admin_data.cpf,
                 data_nascimento=admin_data.data_nascimento,
+                complemento=admin_data.complemento,
                 telefone=admin_data.telefone,
                 cep=admin_data.cep,
                 pontos_fidelidade=0,
@@ -241,6 +242,8 @@ def atualizar_administrador(
             admin_to_update.telefone = admin_data.telefone
         if admin_data.cep:
             admin_to_update.cep = admin_data.cep
+        if admin_data.complemento:
+            admin_to_update.complemento = admin_data.complemento 
         if admin_data.password:
             admin_to_update.password = hash_password(admin_data.password)
 

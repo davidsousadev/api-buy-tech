@@ -15,10 +15,10 @@ class SignUpClienteRequest(BaseCliente):
   cpf: int      
   data_nascimento: str
   telefone: str       
-  cep: int       
+  cep: int  
+  complemento: str     
   password: str
   confirm_password: str
-  endereco: str
   
 # Retorno dos dados
 class ClienteData(BaseCliente):
@@ -30,7 +30,8 @@ class ClienteData(BaseCliente):
   cpf: int      
   data_nascimento: str
   telefone: str       
-  cep: int  
+  cep: int
+  complemento: str  
 
 # Include clientes
 class IncludeCliente(BaseCliente): 
@@ -38,6 +39,7 @@ class IncludeCliente(BaseCliente):
   data_nascimento: str
   telefone: str       
   cep: int 
+  complemento: str
   
   
 # Tabela clientes  
@@ -64,7 +66,7 @@ class UpdateClienteRequest(BaseModel):
     data_nascimento: str | None = None
     telefone: str | None = None
     cep: int | None = None
-    endereco: str | None = None
+    complemento: str | None = None
     password: str | None = None
 
 # Lista de usuarios
