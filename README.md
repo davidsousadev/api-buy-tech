@@ -2,6 +2,7 @@
 
 # Próximos passos
 
+- > Ajustar revendedores na rotas de clientes e admins, implementar funcionalidades especiais a eles
 - > Calcular o frete e aplicar clube fidelidade para quem comprou 5 vezes no mes
 - > Implementar os testes urgentemente
 - > Refatorar a documentação das rotas, install, requeriments e o proprio README.md
@@ -28,7 +29,8 @@ api-buy-tech/
 │   │   ├── emails_controller.py       # Rotas dos E-mails
 │   │   ├── operacoes_controller.py    # Rotas das Operações
 │   │   ├── pedidos_controller.py      # Rotas das Pedidos
-│   │   └── produtos_controller.py     # Rotas dos Produtos
+│   │   ├── produtos_controller.py     # Rotas dos Produtos
+│   │   └── revendedores_controller.py # Rotas dos Revendedores
 │   │
 │   ├── html/                          # Templates de E-mail HTML
 │   │   ├── email_confirmacao.py       # E-mail de confirmação de conta
@@ -44,9 +46,10 @@ api-buy-tech/
 │   │   ├── emails_models.py           # Dados dos E-mails
 │   │   ├── operacoes_models.py        # Dados dos Operações
 │   │   ├── pedidos_models.py          # Dados das Pedidos
-│   │   └── produtos_models.py         # Dados dos Produtos
+│   │   ├── produtos_models.py         # Dados dos Produtos
+│   │   └── revendedores_models.py     # Dados dos Revendedores
 │   │
-│   ├── auth_utils.py     # Arquivo de autenticação de usuários / admins
+│   ├── auth_utils.py     # Arquivo de autenticação de usuários / admins / revendedores
 │   ├── database.py       # Arquivo de configuração de banco de dados 
 │   └── main.py           # Arquivo principal de inicialização
 │

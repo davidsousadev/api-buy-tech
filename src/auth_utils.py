@@ -10,6 +10,7 @@ from decouple import config
 from src.database import get_engine
 from src.models.clientes_models import Cliente
 from src.models.admins_models import Admin
+from src.models.revendedores_models import Revendedor
 from src.models.pedidos_models import Pedido
 
 SECRET_KEY = config('SECRET_KEY')
@@ -75,6 +76,36 @@ async def get_logged_admin(token: Annotated[str, Depends(oauth2_scheme)]):
         raise expired_exception  # Token expirado
     except InvalidTokenError:
         raise invalid_exception  # Token inválido
+
+async def get_logged_revendedor(token: Annotated[str, Depends(oauth2_scheme)]):
+    
+    # Vai pegar o Token na Request, se válido
+    # pegará o usuário no BD para confirmar e retornar ele
+    exception = HTTPException(status_code=401, detail='Não autorizado!')
+    invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
+    expired_exception = HTTPException(status_code=401, detail='Token expirado!')
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+        email = payload.get('sub')
+
+        if not email: 
+            raise exception
+
+        with Session(get_engine()) as session:
+            sttm = select(Revendedor).where(Revendedor.email == email)
+            revendedor = session.exec(sttm).first()
+
+            if not revendedor:
+                raise exception
+
+            return revendedor
+
+    except ExpiredSignatureError:
+        raise expired_exception  # Token expirado
+    except InvalidTokenError:
+        raise invalid_exception  # Token inválido
+
     
 async def verifica_pagamento(token: str):
     exception = HTTPException(status_code=401, detail="Não autorizado!")

@@ -9,6 +9,7 @@ from .controllers.produtos_controller import router as produtos_router
 from .controllers.pedidos_controller import router as pedidos_router
 from .controllers.carrinhos_controller import router as carrinho_router
 from .controllers.operacoes_controller import router as operacoes_router
+from .controllers.revendedores_controller import router as revendedores_router
 
 
 #from .teste.teste_numero_pedido.ok import router as teste_numero_pedido_router
@@ -42,6 +43,7 @@ def create_app():
     app.include_router(carrinho_router, prefix='/carrinhos', tags=["Carrinhos"])
     app.include_router(pedidos_router, prefix='/pedidos', tags=["Pedidos"])
     app.include_router(operacoes_router, prefix='/operacoes', tags=["Operações"])
+    app.include_router(revendedores_router, prefix='/revendedores', tags=["Revendedores"])
     
     # Inicia o banco
     init_db()
