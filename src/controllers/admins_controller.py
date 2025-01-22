@@ -25,7 +25,12 @@ def gerar_codigo_confirmacao(tamanho=6):
         """Gera um código aleatório de confirmação."""
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
-            
+        
+
+@router.options("")
+async def options_admins():
+    return 
+               
 @router.post('/cadastrar')
 def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
     with Session(get_engine()) as session:
