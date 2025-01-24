@@ -8,17 +8,44 @@ from src.models.cupons_models import BaseCupom, Cupom
 
 router = APIRouter()
 
+from typing import Optional
+from fastapi import Query
+
 @router.get("", response_model=List[Cupom])
-def listar_cupons(admin: Annotated[Admin, Depends(get_logged_admin)]):
+def listar_cupons(
+    admin: Annotated[Admin, Depends(get_logged_admin)],
+    nome: str | None = None,
+    valor_min: float | None = None,
+    valor_max: float | None = None,
+    tipo: bool | None = None,
+    resgatado: bool | None = None
+):
     if not admin.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado! Apenas administradores podem listar cupons."
         )
+
     with Session(get_engine()) as session:
+        # Base da consulta
         statement = select(Cupom)
-        cupoms = session.exec(statement).all()
-        return cupoms
+
+        # Filtros dinâmicos
+        if nome:
+            statement = statement.where(Cupom.nome.ilike(f"%{nome}%"))
+        if valor_min is not None:
+            statement = statement.where(Cupom.valor >= valor_min)
+        if valor_max is not None:
+            statement = statement.where(Cupom.valor <= valor_max)
+        if tipo is not None:
+            statement = statement.where(Cupom.tipo == tipo)
+        if resgatado is not None:
+            statement = statement.where(Cupom.resgatado == resgatado)
+
+        # Executa a consulta
+        cupons = session.exec(statement).all()
+        return cupons
+
 
 @router.post("", response_model=BaseCupom)
 def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_logged_admin)],

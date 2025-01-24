@@ -10,9 +10,52 @@ from src.models.produtos_models import BaseProduto, Produto, UpdateProdutoReques
 router = APIRouter()
 
 @router.get("", response_model=List[Produto])
-def listar_produtos():
+def listar_produtos(
+    id: int | None = None,
+    nome: str | None = None,
+    preco_min: float | None = None,
+    preco_max: float | None = None,
+    categoria: int | None = None,
+    personalizado: bool | None = None,
+    status: bool | None = None,
+    quantidade_min: int | None = None,
+    quantidade_max: int | None = None,
+    criacao_inicio: str | None = None,
+    criacao_fim: str | None = None,
+    marca: str | None = None,
+    descricao: str | None = None
+):
     with Session(get_engine()) as session:
         statement = select(Produto)
+
+        # Aplicar filtros dinamicamente
+        if id is not None:
+            statement = statement.where(Produto.id == id)
+        if nome:
+            statement = statement.where(Produto.nome.contains(nome))
+        if preco_min is not None:
+            statement = statement.where(Produto.preco >= preco_min)
+        if preco_max is not None:
+            statement = statement.where(Produto.preco <= preco_max)
+        if categoria:
+            statement = statement.where(Produto.categoria == categoria)
+        if personalizado is not None:
+            statement = statement.where(Produto.personalizado == personalizado)
+        if status is not None:
+            statement = statement.where(Produto.status == status)
+        if quantidade_min is not None:
+            statement = statement.where(Produto.quantidade_estoque >= quantidade_min)
+        if quantidade_max is not None:
+            statement = statement.where(Produto.quantidade_estoque <= quantidade_max)
+        if criacao_inicio:
+            statement = statement.where(Produto.criacao >= criacao_inicio)
+        if criacao_fim:
+            statement = statement.where(Produto.criacao <= criacao_fim)
+        if marca:
+            statement = statement.where(Produto.marca.contains(marca))
+        if descricao:
+            statement = statement.where(Produto.descricao.contains(descricao))
+
         produtos = session.exec(statement).all()
         return produtos
 

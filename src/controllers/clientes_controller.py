@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
 from src.models.clientes_models import SignInClienteRequest, SignUpClienteRequest, Cliente, UpdateClienteRequest, ClienteResponse
+from src.models.revendedores_models import Revendedor
 from src.models.admins_models import Admin
 from passlib.context import CryptContext
 import jwt
@@ -40,7 +41,11 @@ async def verificar_email(email: str):
         statement_admin = select(Admin).where(Admin.email == email)
         admin = session.exec(statement_admin).first()
 
-        if cliente or admin:
+        # Verifica duplicidade em revendedores
+        statement_revendedor = select(Revendedor).where(Revendedor.email == email)
+        revendedor = session.exec(statement_revendedor).first()
+        
+        if cliente or admin or revendedor:
             raise HTTPException(status_code=400, detail="Email já cadastrado.")
 
     return {"message": "Email disponível."}
@@ -57,7 +62,11 @@ async def verificar_cpf(cpf: str):
         statement_admin = select(Admin).where(Admin.cpf == cpf)
         admin = session.exec(statement_admin).first()
 
-        if cliente or admin:
+        # Verifica duplicidade em revendedores
+        statement_revendedor = select(Revendedor).where(Revendedor.cpf == cpf)
+        revendedor = session.exec(statement_revendedor).first()
+        
+        if cliente or admin or revendedor:
             raise HTTPException(status_code=400, detail="CPF já cadastrado.")
 
     return {"message": "CPF disponível."}

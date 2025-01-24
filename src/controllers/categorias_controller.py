@@ -9,9 +9,19 @@ from src.models.categorias_models import BaseCategoria, Categoria
 router = APIRouter()
 
 @router.get("", response_model=List[Categoria])
-def listar_categorias():
+def listar_categorias(
+    id: int | None = None,
+    nome: str | None = None
+):
     with Session(get_engine()) as session:
         statement = select(Categoria)
+
+        # Aplicar filtros dinamicamente
+        if id is not None:
+            statement = statement.where(Categoria.id == id)
+        if nome:
+            statement = statement.where(Categoria.nome.contains(nome))
+        
         categorias = session.exec(statement).all()
         return categorias
 

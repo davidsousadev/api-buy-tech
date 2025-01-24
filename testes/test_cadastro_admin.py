@@ -9,7 +9,7 @@ from src.database import get_engine
 from decouple import config
 
 # Configuração do banco de dados para testes
-DATABASE_URL = config("DATABASE_URL", default="sqlite:///buy-tech.db")
+DATABASE_URL = config("DATABASE_URL", default="sqlite:///buy-tech-teste.db")
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
 # Sobrescrevendo a dependência do banco de dados
