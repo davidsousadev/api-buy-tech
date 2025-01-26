@@ -10,6 +10,11 @@ from src.models.admins_models import Admin
 
 router = APIRouter()
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_carrinhos():
+    return { "methods": ["GET", "POST", "PATCH"] }
+
 # Clientes listar carrinhos
 @router.get("", response_model=List[Carrinho])
 def listar_carrinho(
@@ -68,6 +73,7 @@ def listar_carrinhos_admin(
         itens = session.exec(statement).all()
         return itens
 
+# Cadastrar itens no carrinho
 @router.post("", response_model=BaseCarrinho)
 def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                             cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
@@ -149,6 +155,7 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
         session.refresh(carrinho)
         return carrinho
 
+# Atualizar itens no carrinho
 @router.patch("/{item_id}")
 def atualizar_item_no_carrinho_por_id(
     item_id: int,

@@ -11,6 +11,12 @@ router = APIRouter()
 from typing import Optional
 from fastapi import Query
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_revendedores():
+    return { "methods": ["GET", "POST", "PATCH"] }
+
+# Adminitradores Listar Cupons
 @router.get("", response_model=List[Cupom])
 def listar_cupons(
     admin: Annotated[Admin, Depends(get_logged_admin)],
@@ -46,7 +52,7 @@ def listar_cupons(
         cupons = session.exec(statement).all()
         return cupons
 
-
+# Administradores Cadastrar cupons
 @router.post("", response_model=BaseCupom)
 def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_logged_admin)],
 ):
@@ -86,7 +92,8 @@ def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_
         return cupom
     else: 
         raise HTTPException(status_code=400, detail='Cupom invalido!')
-    
+ 
+# Administradores Atualizar cupons   
 @router.patch("/{cupom_id}")
 def atualizar_cupons_por_id(
     cupom_id: int,

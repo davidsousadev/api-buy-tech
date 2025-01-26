@@ -13,14 +13,22 @@ from src.auth_utils import hash_password
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')
+
 router = APIRouter()
 
 import string
 import random
+
+# Gera codigo com 6 caracteres para confirmação
 def gerar_codigo_confirmacao(tamanho=6):
         """Gera um código aleatório de confirmação."""
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
+
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_emails():
+    return { "methods": ["GET"] }
 
 # Verifica se o email foi confirmado    
 @router.get('/confirmado', status_code=status.HTTP_200_OK)

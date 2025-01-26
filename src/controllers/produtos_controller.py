@@ -9,6 +9,12 @@ from src.models.produtos_models import BaseProduto, Produto, UpdateProdutoReques
 
 router = APIRouter()
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_produtos():
+    return { "methods": ["GET", "POST", "PATCH"] }
+
+# Lista produtos com diversos filtros opcionais
 @router.get("", response_model=List[Produto])
 def listar_produtos(
     id: int | None = None,
@@ -59,6 +65,7 @@ def listar_produtos(
         produtos = session.exec(statement).all()
         return produtos
 
+# Cadastra produtos
 @router.post("", response_model=BaseProduto)
 def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends(get_logged_admin)],
 ):
@@ -104,7 +111,8 @@ def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends
         session.commit()
         session.refresh(produto)
         return produto
-  
+
+# Atualiza produtos por id  
 @router.patch("/{produto_id}")
 def atualizar_produto_por_id(
     produto_id: int,

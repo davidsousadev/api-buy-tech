@@ -51,6 +51,7 @@ api-buy-tech/
 
 # Próximos passos
 
+- > Aplicar condicoes especiais aos revendedores(como descontos para compra em quantidade...)
 - > Refatorar verificar cpf / email em clientes_controller
 - > *Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)
 - > Ajustar revendedores na rotas de clientes e admins, implementar funcionalidades especiais a eles
@@ -74,4 +75,4 @@ api-buy-tech/
 - > ~~Confirmar pagamento, e realizar a atualização tanto nos itens do carrinho, como nos pedidos, vendas ...~~
 - > ~~Realizar o fluxo de cotitas com pagamentos, debitos, creditos, pendencias ...~~
 - > ~~Pontos Fidelidade pela referencia / Pela compra~~
-
+- > ~~Adição de comentarios em todas as rotas~~

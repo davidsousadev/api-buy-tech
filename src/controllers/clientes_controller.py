@@ -23,11 +23,16 @@ URL= config('URL')
 
 router = APIRouter()
 
+# Gera codigo com 6 caracteres para confirmação
 def gerar_codigo_confirmacao(tamanho=6):
         """Gera um código aleatório de confirmação."""
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_clientes():
+    return { "methods": ["GET", "POST", "PATCH"] }
 
 # Endpoint para verificar duplicidade de email
 @router.get("/verificar-email")
@@ -71,8 +76,9 @@ async def verificar_cpf(cpf: str):
 
     return {"message": "CPF disponível."}
 
+# Listar clientes
 @router.get("", response_model=list[ClienteResponse])
-def listar_usuarios(admin: Annotated[Admin, Depends(get_logged_admin)]):
+def listar_clientes(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -84,8 +90,9 @@ def listar_usuarios(admin: Annotated[Admin, Depends(get_logged_admin)]):
         clientes = session.exec(statement).all()
         return [ClienteResponse.model_validate(u) for u in clientes]
 
+# Administrador atualiza clientes
 @router.patch("/admin/atualizar/{cliente_id}")
-def atualizar_usuarios_por_id(
+def atualizar_clientes_por_id(
     cliente_id: int,
     cliente_data: UpdateClienteRequest,
     admin: Annotated[Cliente, Depends(get_logged_admin)],
@@ -174,8 +181,9 @@ def atualizar_usuarios_por_id(
 
         return {"message": "Usuário atualizado com sucesso!", "cliente": cliente_to_update}
 
+# Cadastro de clientes
 @router.post('/cadastrar', status_code=status.HTTP_201_CREATED)
-async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None = None):
+async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None = None):
     with Session(get_engine()) as session:
         
         # Verifica se já existe um usuário com esse e-mail
@@ -289,8 +297,9 @@ async def cadastrar_usuario(cliente_data: SignUpClienteRequest, ref: int | None 
             detail="Erro ao enviar o e-mail de confirmação."
         )
 
+# Login de clientes
 @router.post('/logar')
-def logar_usuario(signin_data: SignInClienteRequest):
+def logar_clientes(signin_data: SignInClienteRequest):
   with Session(get_engine()) as session:
     # pegar usuário por email
     
@@ -331,12 +340,14 @@ def logar_usuario(signin_data: SignInClienteRequest):
     
     return {'access_token': access_token, 'refresh_token': refresh_token}
 
+# Autentica clientes
 @router.get('/autenticar', response_model=Cliente)
-def autenticar_usuario(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+def autenticar_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
   return cliente
 
+# Atualiza clientes por id
 @router.patch("/atualizar/{cliente_id}")
-def atualizar_usuario_por_id(
+def atualizar_clientes_por_id(
     cliente_id: int,
     cliente_data: UpdateClienteRequest,
     cliente: Annotated[Cliente, Depends(get_logged_cliente)]
@@ -425,8 +436,9 @@ def atualizar_usuario_por_id(
 
         return {"message": "Usuário atualizado com sucesso!", "cliente": cliente_to_update}
 
+# Atualiza o status do usuarios para desativado
 @router.patch("/desativar/{cliente_id}")
-def desativar_ususarios(cliente_id: int, cliente: Annotated[Cliente, Depends(get_logged_cliente)]
+def desativar_clientes(cliente_id: int, cliente: Annotated[Cliente, Depends(get_logged_cliente)]
 ):
     if cliente.id != cliente_id:
         raise HTTPException(
@@ -450,7 +462,8 @@ def desativar_ususarios(cliente_id: int, cliente: Annotated[Cliente, Depends(get
         session.refresh(cliente_to_update)
 
         return {"message": "Usuário desativado com sucesso!"}
-       
+ 
+# Adiministradores atualiza o status do usuarios para desativado      
 @router.patch("/admin/desativar/{cliente_id}")
 def desativar_ususarios_admin(cliente_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
@@ -475,5 +488,3 @@ def desativar_ususarios_admin(cliente_id: int, admin: Annotated[Admin, Depends(g
         session.refresh(cliente_to_update)
 
         return {"message": "Usuário desativado com sucesso!"}
-    
-    

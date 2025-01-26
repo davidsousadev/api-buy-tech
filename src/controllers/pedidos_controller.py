@@ -27,11 +27,18 @@ KEY_STORE = config('KEY_STORE')
 
 router = APIRouter()
 
-def gerar_codigo_do_pedido(tamanho=6):
+# Gera codigo com 6 caracteres para confirmação
+def gerar_codigo_confirmacao(tamanho=6):
         """Gera um código aleatório de confirmação."""
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_pedidos():
+    return { "methods": ["GET", "POST", "PATCH"] }
+
+# Lista pedidos dos clientes
 @router.get("", response_model=List[Pedido])
 def listar_pedidos(
     cliente: Annotated[Cliente, Depends(get_logged_cliente)],
@@ -72,6 +79,7 @@ def listar_pedidos(
 
         return pedidos
    
+# Cadastra pedidos dos clientes
 @router.post("")
 def cadastrar_pedido(
     pedido_data: BasePedido,
@@ -174,7 +182,7 @@ def cadastrar_pedido(
         session.commit()
 
         # Gera código de confirmação
-        codigo_de_confirmacao = gerar_codigo_do_pedido()
+        codigo_de_confirmacao = gerar_codigo_confirmacao()
         numero_do_pedido = f"{KEY_STORE}-{cliente.id}-{valor_items}"
         codigo_pedido = hash_password(codigo_de_confirmacao)
         codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{pedido_data.cupom_de_desconto}-{pontos_fidelidade_resgatados}"
@@ -250,7 +258,8 @@ def cadastrar_pedido(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Erro ao enviar o e-mail de confirmação."
             )
-                       
+  
+# Atualiza pedidos dos clientes                     
 @router.patch("/{pedido_id}")
 def cancelar_pedido_por_id(
     pedido_id: int,
@@ -339,6 +348,7 @@ def cancelar_pedido_por_id(
                 detail="O pedido não pode ser cancelado, pois foi pago!"
             )
 
+# Administradores lista pedidos dos clientes
 @router.get("/admin", response_model=List[Pedido])
 def listar_pedidos(
     admin: Annotated[Admin, Depends(get_logged_admin)],

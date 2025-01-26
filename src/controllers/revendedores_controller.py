@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from src.auth_utils import get_logged_revendedor, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from src.auth_utils import get_logged_revendedor, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
 from src.database import get_engine
 from src.models.revendedores_models import SignInRevendedorRequest, SignUpRevendedorRequest, Revendedor, RevendedorResponse, UpdateRevendedorRequest
 from src.models.admins_models import Admin
@@ -16,17 +16,39 @@ from davidsousa import enviar_email
 from src.models.emails_models import Email
 from src.html.email_confirmacao import template_confirmacao
 from decouple import config
+
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')
 
 router = APIRouter()
 
+# Gera codigo com 6 caracteres para confirmação
 def gerar_codigo_confirmacao(tamanho=6):
         """Gera um código aleatório de confirmação."""
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
-            
+
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_revendedores():
+    return { "methods": ["GET", "POST", "PATCH"] }
+
+# Admins Listar Revendedores
+@router.get("", response_model=list[RevendedorResponse])
+def listar_revendedores(admin: Annotated[Admin, Depends(get_logged_admin)]):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem listar revendedores."
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Revendedor)
+        revendedores = session.exec(statement).all()
+        return [RevendedorResponse.model_validate(u) for u in revendedores]
+  
+# Cadastrar Revendedores        
 @router.post('/cadastrar')
 def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
     with Session(get_engine()) as session:
@@ -115,7 +137,8 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Erro ao enviar o e-mail de confirmação."
             )
-        
+  
+# Logar revendedores      
 @router.post('/logar')
 def logar_revendedores(signin_data: SignInRevendedorRequest):
   with Session(get_engine()) as session:
@@ -157,15 +180,14 @@ def logar_revendedores(signin_data: SignInRevendedorRequest):
 
     return {'access_token': access_token, 'refresh_token': refresh_token}
 
+# Autenticar revendedores
 @router.get('/autenticar', response_model=Revendedor)
 def autenticar_revendedores(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
   return revendedor
 
+# Atualizar revendedores por id
 @router.patch("/atualizar/{revendedor_id}")
-def atualizar_revendedor(
-    revendedor_id: int,
-    revendedor_data: UpdateRevendedorRequest,
-    revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)],
+def atualizar_revendedor( revendedor_id: int, revendedor_data: UpdateRevendedorRequest, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)],
 ):
     if revendedor_id != revendedor.id:
         raise HTTPException(
@@ -257,6 +279,7 @@ def atualizar_revendedor(
 
         return {"message": "Revendedor atualizado com sucesso!", "Revendedor": revendedor_to_update}
 
+# Desativar revendedores por id
 @router.patch("/desativar/{revendedor_id}")
 def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     
@@ -283,10 +306,38 @@ def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, D
 
         return {"message": "Revendedor desativado com sucesso!"}
 
-@router.patch("/ativar/{revendedor_id}")
-def ativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+# Adiministradores Desativar revendedores por id
+@router.patch("/admin/desativar/{revendedor_id}")
+def desativar_revendedor(revendedor_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     
-    if revendedor_id != revendedor.id:
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+
+    with Session(get_engine()) as session:
+        sttm = select(Revendedor).where(Revendedor.id == revendedor_id)
+        revendedor_to_update = session.exec(sttm).first()
+
+        if not revendedor_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Revendedor não encontrado."
+            )
+
+        revendedor_to_update.status = False
+        session.add(revendedor_to_update)
+        session.commit()
+        session.refresh(revendedor_to_update)
+
+        return {"message": "Revendedor desativado com sucesso!"}
+    
+# Administradores Ativar Revendedores por id
+@router.patch("/admin/ativar/{revendedor_id}")
+def ativar_revendedor(revendedor_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
+    
+    if not admin.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"

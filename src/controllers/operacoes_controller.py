@@ -32,9 +32,14 @@ Pendências
 
 """
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_emails():
+    return { "methods": ["GET"] }
 
+# Operação de retornar o saldo dos clientes
 @router.get("/saldo")
-def saldo_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+def saldo_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -56,8 +61,9 @@ def saldo_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
                 "saldo": cliente_cadastrado.pontos_fidelidade
                     }
 
+# Operação de retornar o extrato dos clientes
 @router.get("/extrato")
-def extrato_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+def extrato_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -75,9 +81,10 @@ def extrato_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
             return registros
         if not operacoes:
             return []
-        
+
+# Operação de retornar os creditos dos cliente       
 @router.get("/creditos")
-def creditos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+def creditos_dos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -99,9 +106,10 @@ def creditos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
             if (operacao.motivo==1 and operacao.tipo==1) or (operacao.motivo==2 and operacao.tipo==1):
                 creditos.append(operacao)    
         return creditos
-    
+
+# Operação de retornar os debitos dos clientes    
 @router.get("/debitos")
-def debitos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -124,9 +132,9 @@ def debitos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
                 debitos.append(operacao)   
         return debitos
 
+# Operação de confirmar os pagamentos e fazer as determinadas operacoes
 @router.get("/pagamentos/{token}")
-async def confirmar_pagamento(token: str,
-    cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     
     if not cliente:
         raise HTTPException(
@@ -291,9 +299,10 @@ async def confirmar_pagamento(token: str,
             return {
                     "mensage": "Pagamento realizado com sucesso!"
                     }
-            
+
+# Operação de retornar as pendênçias           
 @router.get("/pendencias")
-async def pendencias(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+async def pendencias_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     
     if not cliente:
         raise HTTPException(

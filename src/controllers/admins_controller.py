@@ -21,16 +21,33 @@ URL= config('URL')
 
 router = APIRouter()
 
+# Gera codigo com 6 caracteres para confirmação
 def gerar_codigo_confirmacao(tamanho=6):
         """Gera um código aleatório de confirmação."""
         caracteres = string.ascii_letters + string.digits
         return ''.join(random.choices(caracteres, k=tamanho))
         
-
-@router.options("")
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
 async def options_admins():
-    return 
-               
+    return { "methods": ["GET", "POST", "PATCH"] }
+
+# Lista os administradores
+@router.get("", response_model=list[AdminResponse])
+def listar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
+    
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem listar admins."
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Admin)
+        admins = session.exec(statement).all()
+        return [AdminResponse.model_validate(u) for u in admins]
+
+# Cadastra administradores               
 @router.post('/cadastrar')
 def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
     with Session(get_engine()) as session:
@@ -121,7 +138,8 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Erro ao enviar o e-mail de confirmação."
             )
-        
+
+# Logar administradores        
 @router.post('/logar')
 def logar_admins(signin_data: SignInAdminRequest):
   with Session(get_engine()) as session:
@@ -164,10 +182,12 @@ def logar_admins(signin_data: SignInAdminRequest):
 
     return {'access_token': access_token, 'refresh_token': refresh_token}
 
+# Autentica administradores
 @router.get('/autenticar', response_model=Admin)
 def autenticar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
   return admin
 
+# Atualiza alguns dados dos administradores por id
 @router.patch("/atualizar/{admin_id}")
 def atualizar_administrador(
     admin_id: int,
@@ -259,20 +279,7 @@ def atualizar_administrador(
 
         return {"message": "Administrador atualizado com sucesso!", "Administrador": admin_to_update}
 
-@router.get("", response_model=list[AdminResponse])
-def listar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
-    
-    if not admin.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado! Apenas administradores podem listar admins."
-        )
-
-    with Session(get_engine()) as session:
-        statement = select(Admin)
-        admins = session.exec(statement).all()
-        return [AdminResponse.model_validate(u) for u in admins]
-
+# Atualiza o status dos administradores por id
 @router.patch("/desativar/{admin_id}")
 def desativar_admins(admin_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:

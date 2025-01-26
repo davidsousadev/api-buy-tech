@@ -8,6 +8,12 @@ from src.models.categorias_models import BaseCategoria, Categoria
 
 router = APIRouter()
 
+# Lista os verbos disponiveis para esse controller
+@router.options("", status_code=status.HTTP_200_OK)
+async def options_categorias():
+    return { "methods": ["GET", "POST", "PATCH"] }
+
+# Listar categorias com filtragem opcional
 @router.get("", response_model=List[Categoria])
 def listar_categorias(
     id: int | None = None,
@@ -25,6 +31,7 @@ def listar_categorias(
         categorias = session.exec(statement).all()
         return categorias
 
+# Cadastrar categorias
 @router.post("", response_model=BaseCategoria)
 def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, Depends(get_logged_admin)],
 ):
@@ -51,7 +58,8 @@ def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, 
         session.commit()
         session.refresh(categoria)
         return categoria
-  
+
+# Atualizar categorias  
 @router.patch("/{categoria_id}")
 def atualizar_categorias_por_id(
     categoria_id: int,
