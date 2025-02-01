@@ -1,20 +1,27 @@
+import jwt
 import string
 import random
-from datetime import datetime, timedelta, timezone
-from typing import Annotated, List
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta, timezone
+from passlib.context import CryptContext
+from davidsousa import enviar_email
+from typing import Annotated
 from sqlmodel import Session, select
-from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from sqlalchemy import or_
+
 from src.database import get_engine
+from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+
 from src.models.admins_models import SignInAdminRequest, SignUpAdminRequest, Admin, AdminResponse, UpdateAdminRequest
 from src.models.clientes_models import Cliente
-from passlib.context import CryptContext
-import jwt
-
-from davidsousa import enviar_email
+from src.models.revendedores_models import Revendedor
 from src.models.emails_models import Email
+
 from src.html.email_confirmacao import template_confirmacao
+
 from decouple import config
+
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
 URL= config('URL')
@@ -50,28 +57,56 @@ def listar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
 # Cadastra administradores               
 @router.post('/cadastrar')
 def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
+    
     with Session(get_engine()) as session:
-        
-        # Pegar usuário e admin por email
-        admins = select(Admin).where(Admin.email == admin_data.email)
-        clientes = select(Cliente).where(Cliente.email == admin_data.email)
-        admin = session.exec(admins).first()
-        cliente = session.exec(clientes).first()
-        if admin:
-            raise HTTPException(status_code=400, detail='Já existe um administrador com esse email')
-        if cliente:
-            raise HTTPException(status_code=400, detail='Já existe um usuario com esse email')
-        
-        # Pegar usuário e admin por cpf
-        admins = select(Admin).where(Admin.cpf == admin_data.cpf)
-        clientes = select(Cliente).where(Cliente.cpf == admin_data.cpf)
-        admin = session.exec(admins).first()
-        cliente = session.exec(clientes).first()
 
-        if admin:
-          raise HTTPException(status_code=400, detail='CPF já cadastrado por outro admin!')
-        if cliente:
-          raise HTTPException(status_code=400, detail='CPF já cadastrado por um usuario!')
+        # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
+        sttm = select(Admin, Revendedor, Cliente).where(
+            or_(
+                Admin.cod_confirmacao_email == admin_data.email,
+                Revendedor.cod_confirmacao_email == admin_data.email,
+                Cliente.cod_confirmacao_email == admin_data.email
+            )
+        )
+        registro_existente = session.exec(sttm).first()
+
+        if registro_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
+            )
+
+        # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
+        sttm = select(Admin, Revendedor, Cliente).where(
+            or_(
+                Admin.email == admin_data.email,
+                Revendedor.email == admin_data.email,
+                Cliente.email == admin_data.email
+            )
+        )
+        email_existente = session.exec(sttm).first()
+
+        if email_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='E-mail já cadastrado anteriormente!'
+            )
+
+        # Verifica se já existe um admin ou cliente com o mesmo CPF
+        sttm = select(Admin, Cliente).where(
+            or_(
+                Admin.cpf == admin_data.cpf,
+                Cliente.cpf == admin_data.cpf
+            )
+        )
+        cpf_existente = session.exec(sttm).first()
+
+        if cpf_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='CPF já cadastrado anteriormente!'
+            )
+
       
         if admin_data.password != admin_data.confirm_password:
             raise HTTPException(
@@ -81,9 +116,6 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
 
         # Hash da senha
         hash = hash_password(admin_data.password)
-        link = 0
-        if ref != None:
-          link = ref
 
         codigo = gerar_codigo_confirmacao()
         
@@ -97,9 +129,6 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
                 complemento=admin_data.complemento,
                 telefone=admin_data.telefone,
                 cep=admin_data.cep,
-                pontos_fidelidade=0,
-                clube_fidelidade=False,
-                cod_indicacao=link,
                 status=True,
                 admin=True
                 )
@@ -189,7 +218,7 @@ def autenticar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
 
 # Atualiza alguns dados dos administradores por id
 @router.patch("/atualizar/{admin_id}")
-def atualizar_administrador(
+def atualizar_adminis_por_id(
     admin_id: int,
     admin_data: UpdateAdminRequest,
     admin: Annotated[Admin, Depends(get_logged_admin)],
@@ -218,58 +247,71 @@ def atualizar_administrador(
             )
         
         # Atualizar os campos fornecidos
-        if admin_data.nome:
+        if admin_data.nome and admin_to_update.nome != admin_data.nome:
             admin_to_update.nome = admin_data.nome
-
-        if admin_data.email:
-            # Verificar duplicidade de e-mail em Admin
-            admin_email = select(Admin).where(Admin.email == admin_data.email)
-            if session.exec(admin_email).first():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="E-mail já cadastrado por outro administrador!"
+        if admin_data.email and admin_to_update.email != admin_data.email:
+                # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.cod_confirmacao_email == admin_data.email,
+                    Revendedor.cod_confirmacao_email == admin_data.email,
+                    Cliente.cod_confirmacao_email == admin_data.email
                 )
-
-            # Verificar duplicidade de e-mail em Cliente
-            cliente_email = select(Cliente).where(Cliente.email == admin_data.email)
-            if session.exec(cliente_email).first():
+            )
+            registro_existente = session.exec(sttm).first()
+    
+            if registro_existente:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="E-mail já cadastrado por um usuário!"
+                    detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
+                )
+    
+            # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.email == admin_data.email,
+                    Revendedor.email == admin_data.email,
+                    Cliente.email == admin_data.email
+                )
+            )
+            email_existente = session.exec(sttm).first()
+    
+            if email_existente:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='E-mail já cadastrado anteriormente!'
                 )
 
             # Atualizar o e-mail (mantendo o atual como "não confirmado")
             admin_to_update.cod_confirmacao_email = admin_to_update.email
             admin_to_update.email = admin_data.email
-
-        if admin_data.cpf:
-            # Verificar duplicidade de CPF em Admin
-            admin_cpf = select(Admin).where(Admin.cpf == admin_data.cpf)
-            if session.exec(admin_cpf).first():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="CPF já cadastrado por outro administrador!"
+        if admin_data.cpf and admin_to_update.cpf != admin_data.cpf:
+            
+            # Verifica se já existe um admin ou cliente com o mesmo CPF
+            sttm = select(Admin, Cliente).where(
+                or_(
+                    Admin.cpf == admin_data.cpf,
+                    Cliente.cpf == admin_data.cpf
                 )
+            )
+            cpf_existente = session.exec(sttm).first()
 
-            # Verificar duplicidade de CPF em Cliente
-            cliente_cpf = select(Cliente).where(Cliente.cpf == admin_data.cpf)
-            if session.exec(cliente_cpf).first():
+            if cpf_existente:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="CPF já cadastrado por um usuário!"
+                    detail='CPF já cadastrado anteriormente!'
                 )
 
             admin_to_update.cpf = admin_data.cpf
-
-        if admin_data.data_nascimento:
+        if admin_data.data_nascimento and admin_to_update.data_nascimento != admin_data.data_nascimento:
             admin_to_update.data_nascimento = admin_data.data_nascimento
-        if admin_data.telefone:
+        if admin_data.telefone and admin_to_update.telefone != admin_data.telefone:
             admin_to_update.telefone = admin_data.telefone
-        if admin_data.cep:
+        if admin_data.cep and admin_to_update.cep != admin_data.cep:
             admin_to_update.cep = admin_data.cep
-        if admin_data.complemento:
+        if admin_data.complemento and admin_to_update.complemento != admin_data.complemento:
             admin_to_update.complemento = admin_data.complemento 
-        if admin_data.password:
+        if admin_data.password and admin_to_update.password != hash_password(admin_data.password):
             admin_to_update.password = hash_password(admin_data.password)
 
         # Salvar as alterações no banco de dados
@@ -279,9 +321,10 @@ def atualizar_administrador(
 
         return {"message": "Administrador atualizado com sucesso!", "Administrador": admin_to_update}
 
-# Atualiza o status dos administradores por id
-@router.patch("/desativar/{admin_id}")
-def desativar_admins(admin_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
+# Atualiza o status dos administradores por id para desativado ou ativado
+@router.patch("/atualizar_status/{admin_id}")
+def atualizar_status_admins_por_id(admin_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
+    
     if not admin.admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -298,7 +341,11 @@ def desativar_admins(admin_id: int, admin: Annotated[Admin, Depends(get_logged_a
                 detail="Administrador não encontrado."
             )
 
-        admin_to_update.status = False
+        if admin_to_update.status == False:
+            admin_to_update.status = True
+        elif admin_to_update.status == True:
+           admin_to_update.status = False
+           
         session.add(admin_to_update)
         session.commit()
         session.refresh(admin_to_update)

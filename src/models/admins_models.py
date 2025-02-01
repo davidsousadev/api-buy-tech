@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import date, datetime
+from datetime import datetime
 import datetime
 from sqlmodel import SQLModel, Field
    
@@ -44,9 +44,6 @@ class Admin(IncludeAdmin, table=True):
   id: int = Field(default=None, primary_key=True)
   password: str
   criacao_de_conta: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
-  pontos_fidelidade: int
-  clube_fidelidade: bool
-  cod_indicacao: int
   cod_confirmacao_email: str
   status: bool
   admin: bool = Field(default=True) 

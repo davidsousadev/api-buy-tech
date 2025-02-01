@@ -1,20 +1,24 @@
+import jwt
 import string
 import random
-from datetime import datetime, timedelta, timezone
-from typing import Annotated, List
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta, timezone
+from passlib.context import CryptContext
+from davidsousa import enviar_email
+from typing import Annotated
 from sqlmodel import Session, select
-from src.auth_utils import get_logged_revendedor, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from sqlalchemy import or_
+
 from src.database import get_engine
+from src.auth_utils import get_logged_revendedor, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+
 from src.models.revendedores_models import SignInRevendedorRequest, SignUpRevendedorRequest, Revendedor, RevendedorResponse, UpdateRevendedorRequest
 from src.models.admins_models import Admin
 from src.models.clientes_models import Cliente
-from passlib.context import CryptContext
-import jwt
-
-from davidsousa import enviar_email
 from src.models.emails_models import Email
 from src.html.email_confirmacao import template_confirmacao
+
 from decouple import config
 
 EMAIL = config('EMAIL')
@@ -53,33 +57,48 @@ def listar_revendedores(admin: Annotated[Admin, Depends(get_logged_admin)]):
 def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
     with Session(get_engine()) as session:
         
-        # Pegar usuário, revendedor e admin por email
-        revendedores = select(Revendedor).where(Revendedor.email == revendedor_data.email)
-        admins = select(Admin).where(Admin.email == revendedor_data.email)
-        clientes = select(Cliente).where(Cliente.email == revendedor_data.email)
-        revendedor = session.exec(revendedores).first()
-        admin = session.exec(admins).first()
-        cliente = session.exec(clientes).first()
-        revendedor = session.exec(revendedores).first()
-        if revendedor:
-            raise HTTPException(status_code=400, detail='Já existe um revendedor com esse email')
-        if admin:
-            raise HTTPException(status_code=400, detail='Já existe um administrador com esse email')
-        if cliente:
-            raise HTTPException(status_code=400, detail='Já existe um usuario com esse email')
-        
-        # Pegar revendedor por cnpj
-        revendedores = select(Revendedor).where(Revendedor.cnpj== revendedor_data.cnpj)
-        revendedor = session.exec(revendedores).first()
-        if revendedor:
-            raise HTTPException(status_code=400, detail='Já existe um revendedor com esse cnpj')
-        
-        # Pegar revendedor por inscrição estadual
-        revendedores = select(Revendedor).where(Revendedor.inscricao_estadual== revendedor_data.inscricao_estadual)
-        revendedor = session.exec(revendedores).first()
-        if revendedor:
-            raise HTTPException(status_code=400, detail='Já existe um revendedor com essa inscricao estadual')
-      
+        # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
+        sttm = select(Admin, Revendedor, Cliente).where(
+            or_(
+                Admin.cod_confirmacao_email == revendedor_data.email,
+                Revendedor.cod_confirmacao_email == revendedor_data.email,
+                Cliente.cod_confirmacao_email == revendedor_data.email
+            )
+        )
+        registro_existente = session.exec(sttm).first()
+
+        if registro_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
+            )
+
+        # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
+        sttm = select(Admin, Revendedor, Cliente).where(
+            or_(
+                Admin.email == revendedor_data.email,
+                Revendedor.email == revendedor_data.email,
+                Cliente.email == revendedor_data.email
+            )
+        )
+        email_existente = session.exec(sttm).first()
+
+        if email_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='E-mail já cadastrado anteriormente!'
+            )
+
+        # Verifica se já existe um revendedor com o mesmo CNPJ
+        sttm = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
+        cnpj_existente = session.exec(sttm).first()
+
+        if cnpj_existente:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='CNPJ já cadastrado anteriormente!'
+            )
+
         if revendedor_data.password != revendedor_data.confirm_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -88,7 +107,6 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
 
         # Hash da senha
         hash = hash_password(revendedor_data.password)
-        link = 0
         
         codigo = gerar_codigo_confirmacao()
         
@@ -128,9 +146,9 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
         )
 
         if envio:
-            session.add(admin)
+            session.add(revendedor)
             session.commit()
-            session.refresh(admin)
+            session.refresh(revendedor)
             return {"message": "Revendedor cadastrado com sucesso! E-mail de confirmação enviado."}
 
         raise HTTPException(
@@ -158,7 +176,7 @@ def logar_revendedores(signin_data: SignInRevendedorRequest):
     if revendedor.status == False:
       raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST, 
-        detail='Conta de administrador desativada!') 
+        detail='Conta de revendedor desativada!') 
     
     # encontrou, então verificar a senha
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -213,39 +231,48 @@ def atualizar_revendedor( revendedor_id: int, revendedor_data: UpdateRevendedorR
             )
         
         # Atualizar os campos fornecidos
-        if revendedor_data.razao_social:
+        if revendedor_data.razao_social and revendedor_to_update.razao_social != revendedor_data.razao_social:
             revendedor_to_update.razao_social = revendedor_data.razao_social
 
-        if revendedor_data.email:
-            # Verificar duplicidade de e-mail em Revendedor
-            revendedor_email = select(Revendedor).where(Revendedor.email == revendedor_data.email)
-            if session.exec(revendedor_email).first():
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="E-mail já cadastrado por outro administrador!"
+        if revendedor_data.email and revendedor_to_update.email != revendedor_data.email:
+            # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.cod_confirmacao_email == revendedor_data.email,
+                    Revendedor.cod_confirmacao_email == revendedor_data.email,
+                    Cliente.cod_confirmacao_email == revendedor_data.email
                 )
-                
-            # Verificar duplicidade de e-mail em Admin
-            admin_email = select(Admin).where(Admin.email == revendedor_data.email)
-            if session.exec(admin_email).first():
+            )
+            registro_existente = session.exec(sttm).first()
+
+            if registro_existente:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="E-mail já cadastrado por outro administrador!"
+                    detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
 
-            # Verificar duplicidade de e-mail em Cliente
-            cliente_email = select(Cliente).where(Cliente.email == revendedor_data.email)
-            if session.exec(cliente_email).first():
+            # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.email == revendedor_data.email,
+                    Revendedor.email == revendedor_data.email,
+                    Cliente.email == revendedor_data.email
+                )
+            )
+            email_existente = session.exec(sttm).first()
+
+            if email_existente:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="E-mail já cadastrado por um usuário!"
+                    detail='E-mail já cadastrado anteriormente!'
                 )
 
             # Atualizar o e-mail (mantendo o atual como "não confirmado")
             revendedor_to_update.cod_confirmacao_email = revendedor_to_update.email
             revendedor_to_update.email = revendedor_data.email
 
-        if revendedor_data.cnpj:
+        if revendedor_data.cnpj and revendedor_to_update.cnpj != revendedor_data.cnpj:
+            
             # Verificar duplicidade de CNPJ em Revendedor
             revendedor_cnpj = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
             if session.exec(revendedor_cnpj).first():
@@ -255,21 +282,23 @@ def atualizar_revendedor( revendedor_id: int, revendedor_data: UpdateRevendedorR
                 )
             revendedor_to_update.cnpj = revendedor_data.cnpj
 
-        if revendedor_data.inscricao_estadual:
+        if revendedor_data.inscricao_estadual and revendedor_to_update.inscricao_estadual != revendedor_data.inscricao_estadual:
+            
             # Verificar duplicidade de CNPJ em Revendedor
-            revendedor_inscricao_estadual = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
-            if session.exec(revendedor_inscricao_estadual).first():
+            revendedor_inscricao_estadual = select(Revendedor).where(Revendedor.inscricao_estadual == revendedor_data.inscricao_estadual)
+            revendedor_duplicicade = session.exec(revendedor_inscricao_estadual).first()
+            
+            if revendedor_duplicicade and revendedor_duplicicade.cnpj != revendedor_data.cnpj:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Incrição Estadual já cadastrada por outro Revendedor!"
                 )
             revendedor_to_update.inscricao_estadual = revendedor_data.inscricao_estadual
-        
-       
-        if revendedor_data.telefone:
+            
+        if revendedor_data.telefone and revendedor_to_update.telefone != revendedor_data.telefone:
             revendedor_to_update.telefone = revendedor_data.telefone
  
-        if revendedor_data.password:
+        if revendedor_data.password and revendedor_to_update.password != hash_password(revendedor_data.password):
             revendedor_to_update.password = hash_password(revendedor_data.password)
 
         # Salvar as alterações no banco de dados
@@ -306,9 +335,9 @@ def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, D
 
         return {"message": "Revendedor desativado com sucesso!"}
 
-# Adiministradores Desativar revendedores por id
-@router.patch("/admin/desativar/{revendedor_id}")
-def desativar_revendedor(revendedor_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
+# Adiministradores Atualiza status revendedores por id para desativado ou ativado
+@router.patch("/admin/atualizar_status/{revendedor_id}")
+def atualizar_status_admin_revendedor_por_id(revendedor_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     
     if not admin.admin:
         raise HTTPException(
@@ -326,36 +355,13 @@ def desativar_revendedor(revendedor_id: int, admin: Annotated[Admin, Depends(get
                 detail="Revendedor não encontrado."
             )
 
-        revendedor_to_update.status = False
+        if revendedor_to_update.status == False:
+            revendedor_to_update.status = True
+        elif revendedor_to_update.status == True:
+           revendedor_to_update.status = False
+           
         session.add(revendedor_to_update)
         session.commit()
         session.refresh(revendedor_to_update)
 
         return {"message": "Revendedor desativado com sucesso!"}
-    
-# Administradores Ativar Revendedores por id
-@router.patch("/admin/ativar/{revendedor_id}")
-def ativar_revendedor(revendedor_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
-    
-    if not admin.admin:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado!"
-        )
-
-    with Session(get_engine()) as session:
-        sttm = select(Revendedor).where(Revendedor.id == revendedor_id)
-        revendedor_to_update = session.exec(sttm).first()
-
-        if not revendedor_to_update:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Revendedor não encontrado."
-            )
-
-        revendedor_to_update.status = True
-        session.add(revendedor_to_update)
-        session.commit()
-        session.refresh(revendedor_to_update)
-
-        return {"message": "Revendedor Ativado com Sucesso!"}

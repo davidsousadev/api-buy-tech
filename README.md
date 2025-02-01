@@ -52,12 +52,10 @@ api-buy-tech/
 # Próximos passos
 
 - > Aplicar condicoes especiais aos revendedores(como descontos para compra em quantidade...)
-- > Refatorar verificar cpf / email em clientes_controller
 - > *Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)
 - > Ajustar revendedores na rotas de clientes e admins, implementar funcionalidades especiais a eles
 - > Calcular o frete e aplicar clube fidelidade para quem comprou 5 vezes no mes
 - > Implementar os testes urgentemente
-- > Refatorar a documentação das rotas, install, requeriments e o proprio README.md
 - > Refatorar o cupom de desconto para quantidade disponivel, ultilizada, e registro de que usou
 - > Clube fidelidade (Decidir como vai funcionar a pontuação de desconto para quem fizer parte)
 - > Alerta de promoções, verificar antes de realizar o pedido, atualizar o valor dos itens no carrinho
@@ -76,3 +74,5 @@ api-buy-tech/
 - > ~~Realizar o fluxo de cotitas com pagamentos, debitos, creditos, pendencias ...~~
 - > ~~Pontos Fidelidade pela referencia / Pela compra~~
 - > ~~Adição de comentarios em todas as rotas~~
+- > ~~Refatorar verificar cpf / email em clientes_controller~~
+- > ~~Refatorar a documentação das rotas, install, requeriments e o proprio README.md~~
