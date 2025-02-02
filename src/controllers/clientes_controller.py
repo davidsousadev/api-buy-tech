@@ -9,6 +9,7 @@ from davidsousa import enviar_email
 from typing import Annotated
 from sqlmodel import Session, select
 from sqlalchemy import or_
+from sqlalchemy.sql import union_all
 
 from src.database import get_engine
 from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
@@ -58,11 +59,11 @@ async def verificar_email(email: str):
         if cliente or admin or revendedor:
             raise HTTPException(status_code=400, detail="Email já cadastrado.")
 
-    return {"message": "Email disponível."}
+    return {"e-mail": True}
 
 # Endpoint para verificar duplicidade de CPF
 @router.get("/verificar-cpf")
-async def verificar_cpf(cpf: str):
+async def verificar_cpf(cpf: int):
     with Session(get_engine()) as session:
         # Verifica duplicidade em clientes
         statement = select(Cliente).where(Cliente.cpf == cpf)
@@ -71,15 +72,11 @@ async def verificar_cpf(cpf: str):
         # Verifica duplicidade em admins
         statement_admin = select(Admin).where(Admin.cpf == cpf)
         admin = session.exec(statement_admin).first()
-
-        # Verifica duplicidade em revendedores
-        statement_revendedor = select(Revendedor).where(Revendedor.cpf == cpf)
-        revendedor = session.exec(statement_revendedor).first()
         
-        if cliente or admin or revendedor:
+        if cliente or admin:
             raise HTTPException(status_code=400, detail="CPF já cadastrado.")
 
-    return {"message": "CPF disponível."}
+    return {"cpf": True}
 
 # Listar clientes
 @router.get("", response_model=list[ClienteResponse])
@@ -101,12 +98,10 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
     with Session(get_engine()) as session:
         
         # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
-        sttm = select(Admin, Revendedor, Cliente).where(
-            or_(
-                Admin.cod_confirmacao_email == cliente_data.email,
-                Revendedor.cod_confirmacao_email == cliente_data.email,
-                Cliente.cod_confirmacao_email == cliente_data.email
-            )
+        sttm = union_all(
+            select(Admin.cod_confirmacao_email).where(Admin.cod_confirmacao_email == cliente_data.email),
+            select(Revendedor.cod_confirmacao_email).where(Revendedor.cod_confirmacao_email == cliente_data.email),
+            select(Cliente.cod_confirmacao_email).where(Cliente.cod_confirmacao_email == cliente_data.email),
         )
         registro_existente = session.exec(sttm).first()
 
@@ -117,12 +112,10 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
             )
 
         # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
-        sttm = select(Admin, Revendedor, Cliente).where(
-            or_(
-                Admin.email == cliente_data.email,
-                Revendedor.email == cliente_data.email,
-                Cliente.email == cliente_data.email
-            )
+        sttm = union_all(
+            select(Admin.email).where(Admin.email == cliente_data.email),
+            select(Revendedor.email).where(Revendedor.email == cliente_data.email),
+            select(Cliente.email).where(Cliente.email == cliente_data.email),
         )
         email_existente = session.exec(sttm).first()
 
@@ -133,11 +126,9 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
             )
 
         # Verifica se já existe um admin ou cliente com o mesmo CPF
-        sttm = select(Admin, Cliente).where(
-            or_(
-                Admin.cpf == cliente_data.cpf,
-                Cliente.cpf == cliente_data.cpf
-            )
+        sttm = union_all(
+            select(Admin.cpf).where(Admin.cpf == cliente_data.cpf),
+            select(Cliente.cpf).where(Cliente.cpf == cliente_data.cpf),
         )
         cpf_existente = session.exec(sttm).first()
 

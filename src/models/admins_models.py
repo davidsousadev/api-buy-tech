@@ -10,7 +10,7 @@ class BaseAdmin(SQLModel):
 
 # Criar cliente include BaseAdmin
 class SignUpAdminRequest(BaseAdmin): 
-  cpf: int      
+  cpf: str      
   data_nascimento: str
   telefone: str       
   cep: int 
@@ -25,7 +25,7 @@ class AdminData(BaseAdmin):
   cod_indicacao: int
   status: bool
   admin: bool
-  cpf: int      
+  cpf: str      
   data_nascimento: str
   telefone: str       
   cep: int 
@@ -33,7 +33,7 @@ class AdminData(BaseAdmin):
 
 # Include Admin
 class IncludeAdmin(BaseAdmin): 
-  cpf: int      
+  cpf: str      
   data_nascimento: str
   telefone: str       
   cep: int 
@@ -56,7 +56,7 @@ class SignInAdminRequest(SQLModel):
 class UpdateAdminRequest(BaseModel):
     nome: str | None = None
     email: str | None = None
-    cpf: int | None = None
+    cpf: str | None = None
     data_nascimento: str | None = None
     telefone: str | None = None
     cep: int | None = None

@@ -9,6 +9,7 @@ from davidsousa import enviar_email
 from typing import Annotated
 from sqlmodel import Session, select
 from sqlalchemy import or_
+from sqlalchemy.sql import union_all
 
 from src.database import get_engine
 from src.auth_utils import get_logged_revendedor, get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
@@ -58,12 +59,10 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
     with Session(get_engine()) as session:
         
         # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
-        sttm = select(Admin, Revendedor, Cliente).where(
-            or_(
-                Admin.cod_confirmacao_email == revendedor_data.email,
-                Revendedor.cod_confirmacao_email == revendedor_data.email,
-                Cliente.cod_confirmacao_email == revendedor_data.email
-            )
+        sttm = union_all(
+            select(Admin.cod_confirmacao_email).where(Admin.cod_confirmacao_email == revendedor_data.email),
+            select(Revendedor.cod_confirmacao_email).where(Revendedor.cod_confirmacao_email == revendedor_data.email),
+            select(Cliente.cod_confirmacao_email).where(Cliente.cod_confirmacao_email == revendedor_data.email),
         )
         registro_existente = session.exec(sttm).first()
 
@@ -74,12 +73,10 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
             )
 
         # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
-        sttm = select(Admin, Revendedor, Cliente).where(
-            or_(
-                Admin.email == revendedor_data.email,
-                Revendedor.email == revendedor_data.email,
-                Cliente.email == revendedor_data.email
-            )
+        sttm = union_all(
+            select(Admin.email).where(Admin.email == revendedor_data.email),
+            select(Revendedor.email).where(Revendedor.email == revendedor_data.email),
+            select(Cliente.email).where(Cliente.email == revendedor_data.email),
         )
         email_existente = session.exec(sttm).first()
 
@@ -88,7 +85,7 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='E-mail já cadastrado anteriormente!'
             )
-
+            
         # Verifica se já existe um revendedor com o mesmo CNPJ
         sttm = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
         cnpj_existente = session.exec(sttm).first()

@@ -12,7 +12,7 @@ class BaseCliente(SQLModel):
 
 # Criar cliente include BaseCliente
 class SignUpClienteRequest(BaseCliente): 
-  cpf: int      
+  cpf: str      
   data_nascimento: str
   telefone: str       
   cep: int  
@@ -27,7 +27,7 @@ class ClienteData(BaseCliente):
   cod_indicacao: int
   status: bool
   admin: bool
-  cpf: int      
+  cpf: str      
   data_nascimento: str
   telefone: str       
   cep: int
@@ -35,7 +35,7 @@ class ClienteData(BaseCliente):
 
 # Include clientes
 class IncludeCliente(BaseCliente): 
-  cpf: int      
+  cpf: str      
   data_nascimento: str
   telefone: str       
   cep: int 
@@ -62,7 +62,7 @@ class SignInClienteRequest(SQLModel):
 class UpdateClienteRequest(BaseModel):
     nome: str | None = None
     email: str | None = None
-    cpf: int | None = None
+    cpf: str | None = None
     data_nascimento: str | None = None
     telefone: str | None = None
     cep: int | None = None

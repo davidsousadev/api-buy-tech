@@ -9,6 +9,7 @@ from davidsousa import enviar_email
 from typing import Annotated
 from sqlmodel import Session, select
 from sqlalchemy import or_
+from sqlalchemy.sql import union_all
 
 from src.database import get_engine
 from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
@@ -61,12 +62,10 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
     with Session(get_engine()) as session:
 
         # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
-        sttm = select(Admin, Revendedor, Cliente).where(
-            or_(
-                Admin.cod_confirmacao_email == admin_data.email,
-                Revendedor.cod_confirmacao_email == admin_data.email,
-                Cliente.cod_confirmacao_email == admin_data.email
-            )
+        sttm = union_all(
+            select(Admin.cod_confirmacao_email).where(Admin.cod_confirmacao_email == admin_data.email),
+            select(Revendedor.cod_confirmacao_email).where(Revendedor.cod_confirmacao_email == admin_data.email),
+            select(Cliente.cod_confirmacao_email).where(Cliente.cod_confirmacao_email == admin_data.email),
         )
         registro_existente = session.exec(sttm).first()
 
@@ -77,12 +76,10 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
             )
 
         # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
-        sttm = select(Admin, Revendedor, Cliente).where(
-            or_(
-                Admin.email == admin_data.email,
-                Revendedor.email == admin_data.email,
-                Cliente.email == admin_data.email
-            )
+        sttm = union_all(
+            select(Admin.email).where(Admin.email == admin_data.email),
+            select(Revendedor.email).where(Revendedor.email == admin_data.email),
+            select(Cliente.email).where(Cliente.email == admin_data.email),
         )
         email_existente = session.exec(sttm).first()
 
@@ -93,11 +90,9 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
             )
 
         # Verifica se já existe um admin ou cliente com o mesmo CPF
-        sttm = select(Admin, Cliente).where(
-            or_(
-                Admin.cpf == admin_data.cpf,
-                Cliente.cpf == admin_data.cpf
-            )
+        sttm = union_all(
+            select(Admin.cpf).where(Admin.cpf == admin_data.cpf),
+            select(Cliente.cpf).where(Cliente.cpf == admin_data.cpf),
         )
         cpf_existente = session.exec(sttm).first()
 
@@ -105,9 +100,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='CPF já cadastrado anteriormente!'
-            )
-
-      
+            )      
         if admin_data.password != admin_data.confirm_password:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

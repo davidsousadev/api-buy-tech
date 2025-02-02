@@ -9,7 +9,7 @@ class BaseRevendedor(SQLModel):
 
 # Criar Revendedor include BaseRevendedor
 class SignUpRevendedorRequest(BaseRevendedor): 
-  cnpj: int      
+  cnpj: str      
   telefone: str       
   inscricao_estadual: int 
   password: str
@@ -18,13 +18,13 @@ class SignUpRevendedorRequest(BaseRevendedor):
 # Retorno dos dados
 class RevendedorData(BaseRevendedor):
   status: bool
-  cnpj: int      
+  cnpj: str      
   inscricao_estadual: int 
   telefone: str       
 
 # Include Revendedor
 class IncludeRevendedor(BaseRevendedor): 
-  cnpj: int      
+  cnpj: str      
   telefone: str       
   inscricao_estadual: int 
   
