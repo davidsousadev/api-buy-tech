@@ -15,7 +15,7 @@ from src.models.pedidos_models import Pedido
 
 SECRET_KEY = config('SECRET_KEY')
 ALGORITHM = config('ALGORITHM')
-ACCESS_EXPIRES=10 
+ACCESS_EXPIRES=60 
 REFRESH_EXPIRES=60*24*3 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='signin')
