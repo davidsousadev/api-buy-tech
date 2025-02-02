@@ -34,7 +34,13 @@ def create_app():
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
+    
+    # Middleware TrustedHost sem parâmetros incorretos
+    app.add_middleware(
+        TrustedHostMiddleware, 
+        allowed_hosts=["*"],  # ! Restringir em produção
+    )  
+    
     # Registro das rotas
     app.include_router(admins_router, prefix="/admins", tags=["Admins"])
     app.include_router(clientes_router, prefix="/clientes", tags=["Clientes"])
@@ -58,7 +64,7 @@ app = create_app()
 if __name__ == "__main__":
     import uvicorn
     import os
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])  
+    
     # Porta dinâmica para compatibilidade com serviços do RENDER
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("src.main:app", host="0.0.0.0", port=port, reload=True)
