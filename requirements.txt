@@ -77,7 +77,6 @@ packaging==24.2
 passlib==1.7.4
 pg8000==1.31.2
 pluggy==1.5.0
-psycopg2==2.9.10
 psycopg2-binary==2.9.10
 pycparser==2.22
 pydantic==2.10.5
