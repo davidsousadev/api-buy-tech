@@ -18,11 +18,7 @@ async def options_carrinhos():
 # Clientes listar carrinhos
 @router.get("", response_model=List[Carrinho])
 def listar_carrinho(
-    cliente: Annotated[Cliente, Depends(get_logged_cliente)],
-    quantidade: int | None = None,
-    preco: float | None = None,
-    produto_codigo: int | None = None,
-    codigo: str | None = None
+    cliente: Annotated[Cliente, Depends(get_logged_cliente)]
 ):
     if not cliente.id:
         raise HTTPException(
@@ -31,22 +27,14 @@ def listar_carrinho(
         )
     
     with Session(get_engine()) as session:
-        statement = select(Carrinho).where(Carrinho.cliente_id == Cliente.id, Carrinho.status == False)
-        filtros = [Carrinho.cliente_id == Cliente.id]
-        
-        if quantidade is not None:
-            filtros.append(Carrinho.quantidade == quantidade)
-        if preco is not None:
-            filtros.append(Carrinho.preco == preco)
-        if produto_codigo is not None:
-            filtros.append(Carrinho.produto_codigo == produto_codigo)
-        if codigo is not None:
-            filtros.append(Carrinho.codigo == codigo)
-        if filtros:
-            statement = statement.where(and_(*filtros))
-            
+        statement = select(Carrinho).where(Carrinho.cliente_id == Cliente.id, Carrinho.status == False)   
         itens = session.exec(statement).all()
-        return itens
+        if itens:
+            return itens
+        else:
+            return {
+                "carrinho": False
+            }
 
 # Admins listar carrinhos
 @router.get("/admin", response_model=List[Carrinho])
