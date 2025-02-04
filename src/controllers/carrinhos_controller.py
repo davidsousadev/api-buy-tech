@@ -32,9 +32,10 @@ def listar_carrinho(
         if itens:
             return itens
         else:
-            return {
-                "carrinho": False
-            }
+            raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Carrinho vazio!"
+        )
 
 # Admins listar carrinhos
 @router.get("/admin", response_model=List[Carrinho])
