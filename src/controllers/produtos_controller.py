@@ -65,6 +65,15 @@ def listar_produtos(
         produtos = session.exec(statement).all()
         return produtos
 
+# Busca um produto específico pelo ID
+@router.get("/{id}", response_model=Produto)
+def buscar_produto(id: int):
+    with Session(get_engine()) as session:
+        produto = session.get(Produto, id)
+        if not produto:
+            raise HTTPException(status_code=404, detail="Produto não encontrado")
+        return produto
+
 # Cadastra produtos
 @router.post("", response_model=BaseProduto)
 def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends(get_logged_admin)],
