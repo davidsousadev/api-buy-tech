@@ -92,6 +92,20 @@ def listar_clientes(admin: Annotated[Admin, Depends(get_logged_admin)]):
         clientes = session.exec(statement).all()
         return [ClienteResponse.model_validate(u) for u in clientes]
 
+# Listar clientes por id
+@router.get("/{cliente_id}")
+def listar_clientes_por_id(admin: Annotated[Admin, Depends(get_logged_admin)], cliente_id: int):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem listar usuarios."
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Cliente).where(Cliente.id==cliente_id)
+        clientes = session.exec(statement).all()
+        return [ClienteResponse.model_validate(u) for u in clientes]
+
 # Cadastro de clientes
 @router.post('/cadastrar', status_code=status.HTTP_201_CREATED)
 async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None = None):

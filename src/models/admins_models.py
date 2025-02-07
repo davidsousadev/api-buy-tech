@@ -71,9 +71,6 @@ class AdminResponse(BaseModel):
     email: str
     cod_confirmacao_email: str
     criacao_de_conta: str
-    pontos_fidelidade: int
-    clube_fidelidade: bool
-    cod_indicacao: int
     status: bool
 
     class Config:
