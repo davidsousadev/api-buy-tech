@@ -79,7 +79,7 @@ async def verificar_cpf(cpf: int):
     return {"cpf": True}
 
 # Listar clientes
-@router.get("", response_model=list[ClienteResponse])
+@router.get("/admin", response_model=list[ClienteResponse])
 def listar_clientes(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
@@ -93,7 +93,7 @@ def listar_clientes(admin: Annotated[Admin, Depends(get_logged_admin)]):
         return [ClienteResponse.model_validate(u) for u in clientes]
 
 # Listar clientes por id
-@router.get("/{cliente_id}")
+@router.get("/admin/{cliente_id}")
 def listar_clientes_por_id(admin: Annotated[Admin, Depends(get_logged_admin)], cliente_id: int):
     if not admin.admin:
         raise HTTPException(
@@ -270,7 +270,7 @@ def logar_clientes(signin_data: SignInClienteRequest):
     return {'access_token': access_token, 'refresh_token': refresh_token}
 
 # Autentica clientes
-@router.get('/autenticar', response_model=Cliente)
+@router.get("/autenticar")
 def autenticar_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
   return cliente
 

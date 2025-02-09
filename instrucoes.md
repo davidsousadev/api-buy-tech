@@ -31,7 +31,7 @@
 ### Examples:
 - > KEY_EMAIL= halv wpqs mgpl epxj
 - > ALGORITHM = HS256
-- > URL=http://127.0.0.1:8000
+- > URL=http://127.0.0.1:8000 # Api
 
 ## Roda o projeto *Só depois de adicionar as variaveis
 

@@ -24,7 +24,8 @@ async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
     
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
-    exception = HTTPException(status_code=401, detail='Não autorizado!')
+    exception = HTTPException(status_code=401, detail='Cliente Não autorizado!')
+    email_invalid = HTTPException(status_code=401, detail='E-mail do Cliente Não está no banco!')
     invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
     expired_exception = HTTPException(status_code=401, detail='Token expirado!')
 
@@ -40,7 +41,7 @@ async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
             cliente = session.exec(sttm).first()
 
             if not cliente:
-                raise exception
+                raise email_invalid
 
             return cliente
 
@@ -52,7 +53,8 @@ async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
 async def get_logged_admin(token: Annotated[str, Depends(oauth2_scheme)]):
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
-    exception = HTTPException(status_code=401, detail='Não autorizado!')
+    exception = HTTPException(status_code=401, detail='Admin Não autorizado!')
+    email_invalid = HTTPException(status_code=401, detail='E-mail do Admin Não está no banco!')
     invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
     expired_exception = HTTPException(status_code=401, detail='Token expirado!')
 
@@ -68,7 +70,7 @@ async def get_logged_admin(token: Annotated[str, Depends(oauth2_scheme)]):
             admin = session.exec(sttm).first()
 
             if not admin:
-                raise exception
+                raise email_invalid
 
             return admin
 
@@ -81,7 +83,8 @@ async def get_logged_revendedor(token: Annotated[str, Depends(oauth2_scheme)]):
     
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
-    exception = HTTPException(status_code=401, detail='Não autorizado!')
+    exception = HTTPException(status_code=401, detail='Revendedor Não autorizado!')
+    email_invalid = HTTPException(status_code=401, detail='E-mail do Revendedor Não está no banco!')
     invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
     expired_exception = HTTPException(status_code=401, detail='Token expirado!')
 
@@ -97,7 +100,7 @@ async def get_logged_revendedor(token: Annotated[str, Depends(oauth2_scheme)]):
             revendedor = session.exec(sttm).first()
 
             if not revendedor:
-                raise exception
+                raise email_invalid
 
             return revendedor
 

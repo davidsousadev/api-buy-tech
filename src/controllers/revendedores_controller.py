@@ -39,6 +39,19 @@ def gerar_codigo_confirmacao(tamanho=6):
 async def options_revendedores():
     return { "methods": ["GET", "POST", "PATCH"] }
 
+# Endpoint para verificar duplicidade de CNPJ
+@router.get("/verificar-cnpj")
+async def verificar_cnpj(cnpj: int):
+    with Session(get_engine()) as session:
+        # Verifica duplicidade em revendedores
+        statement = select(revendedor).where(Revendedor.cnpj == cnpj)
+        revendedor = session.exec(statement).first()
+        
+        if revendedor:
+            raise HTTPException(status_code=400, detail="CNPJ já cadastrado.")
+
+    return {"cnpj": True}
+
 # Admins Listar Revendedores
 @router.get("", response_model=list[RevendedorResponse])
 def listar_revendedores(admin: Annotated[Admin, Depends(get_logged_admin)]):

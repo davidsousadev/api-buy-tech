@@ -1,4 +1,5 @@
 from fastapi import APIRouter, status, HTTPException
+from fastapi.responses import RedirectResponse
 from decouple import config
 from davidsousa import enviar_email
 from src.models.emails_models import Email
@@ -73,7 +74,7 @@ def email_confirmado(codigo: str):
             session.commit()
             session.refresh(admin_to_update)
             
-        return {"email": True}
+        return RedirectResponse(url=f"{URL}/logar.html")
     
 # Recuperar email
 @router.get('/recuperar_email', status_code=status.HTTP_200_OK)

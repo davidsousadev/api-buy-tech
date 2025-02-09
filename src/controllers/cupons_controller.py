@@ -1,9 +1,10 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from src.auth_utils import get_logged_cliente, get_logged_admin
 from src.database import get_engine
 from src.models.admins_models import Admin
+from src.models.clientes_models import Cliente
 from src.models.cupons_models import BaseCupom, Cupom
 
 router = APIRouter()
@@ -16,8 +17,26 @@ from fastapi import Query
 async def options_revendedores():
     return { "methods": ["GET", "POST", "PATCH"] }
 
+
+# Clientes Verificar Cupons
+@router.get("/verificar-cupom")
+def verificar_cupons( cupom_nome: str):
+
+    with Session(get_engine()) as session:
+        # Base da consulta
+        statement = select(Cupom).where(Cupom.nome==cupom_nome)
+        cupom = session.exec(statement).first()
+        if cupom:
+            return {
+                "cupom": {cupom}
+                }
+        else:
+            return {
+                "cupom": False
+                }
+
 # Adminitradores Listar Cupons
-@router.get("", response_model=List[Cupom])
+@router.get("/admin", response_model=List[Cupom])
 def listar_cupons(
     admin: Annotated[Admin, Depends(get_logged_admin)],
     nome: str | None = None,
@@ -74,7 +93,7 @@ def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_
         cupom = session.exec(sttm).first()
     
     if cupom:
-      raise HTTPException(status_code=400, detail='Cupom já existe com esse nome!')
+        raise HTTPException(status_code=400, detail='Cupom já existe com esse nome!')
     
     
     

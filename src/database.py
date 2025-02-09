@@ -1,7 +1,7 @@
 from sqlmodel import create_engine, SQLModel
 from decouple import config
 
-# DATABASE_URL = config("DATABASE_URL", default="sqlite:///buy-tech.db")
+DATABASE_URL = config("DATABASE_URL", default="sqlite:///buy-tech.db")
 
 # Usuário e Senha
 user = config('DB_USERNAME')
@@ -12,7 +12,7 @@ db_name = config('DB_NAME')
 host = config('DB_HOST')
 port = config('DB_PORT')
 # Montar a URL para conexão
-DATABASE_URL = f'postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require'
+#DATABASE_URL = f'postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require'
 
 def get_engine():
     connect_args = {"check_same_thread": False} if "sqlite" in DATABASE_URL else {}

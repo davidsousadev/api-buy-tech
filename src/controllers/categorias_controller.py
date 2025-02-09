@@ -17,7 +17,8 @@ async def options_categorias():
 @router.get("", response_model=List[Categoria])
 def listar_categorias(
     id: int | None = None,
-    nome: str | None = None
+    nome: str | None = None,
+    criacao: str | None = None
 ):
     with Session(get_engine()) as session:
         statement = select(Categoria)
@@ -26,9 +27,23 @@ def listar_categorias(
         if id is not None:
             statement = statement.where(Categoria.id == id)
         if nome:
-            statement = statement.where(Categoria.nome.contains(nome))
+            statement = statement.where(Categoria.nome.contains(nome))  
+        if criacao:
+            statement = statement.where(Categoria.criacao)
         
         categorias = session.exec(statement).all()
+        return categorias
+    
+    
+# Listar categorias por id
+@router.get("/{categoria_id}", response_model=Categoria)
+def listar_categorias_por_id(
+    categoria_id: int
+):
+    with Session(get_engine()) as session:
+        statement = select(Categoria)
+        statement = statement.where(Categoria.id == categoria_id)        
+        categorias = session.exec(statement).first()
         return categorias
 
 # Cadastrar categorias
