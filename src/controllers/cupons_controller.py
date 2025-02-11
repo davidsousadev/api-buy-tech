@@ -27,9 +27,15 @@ def verificar_cupons( cupom_nome: str):
         statement = select(Cupom).where(Cupom.nome==cupom_nome)
         cupom = session.exec(statement).first()
         if cupom:
-            return {
-                "cupom": cupom
-                }
+            if cupom.quantidade_de_ultilizacao == 0:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="A quantidade máxima de cupons já foi resgatada."
+                    )
+            else:
+                return {
+                    "cupom": cupom
+                    }
         else:
             return {
                 "cupom": False
@@ -70,6 +76,32 @@ def listar_cupons(
         # Executa a consulta
         cupons = session.exec(statement).all()
         return cupons
+
+# Adminitradores Listar Cupons por id
+@router.get("/admin/{cupom_id}")
+def listar_cupons(
+    admin: Annotated[Admin, Depends(get_logged_admin)],
+    cupom_id: int
+):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem listar cupons."
+        )
+
+    with Session(get_engine()) as session:
+        # Base da consulta
+        statement = select(Cupom).where(Cupom.id==cupom_id)
+
+        # Executa a consulta
+        cupom = session.exec(statement).first()
+        if cupom:
+            return cupom
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cupom não localizado."
+        )
+
 
 # Administradores Cadastrar cupons
 @router.post("", response_model=BaseCupom)
@@ -125,13 +157,14 @@ def atualizar_cupons_por_id(
             detail="Acesso negado!"
         )
     
-    if cupom_data.valor>100 and cupom_data.tipo==False:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Cupom de desconto não pode ser mais que 100%."
-            ) 
-        
+    if cupom_data.valor > 100 and cupom_data.tipo == False:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Cupom de desconto não pode ser mais que 100%."
+        ) 
+
     with Session(get_engine()) as session:
+        # Busca o cupom para atualizar
         sttm = select(Cupom).where(Cupom.id == cupom_id)
         cupom_to_update = session.exec(sttm).first()
 
@@ -140,38 +173,43 @@ def atualizar_cupons_por_id(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Cupom não encontrado."
             )
-        if cupom_to_update.nome==cupom_data.nome:
+        
+        # Verifica se há outro cupom com o mesmo nome, excluindo o cupom que está sendo atualizado
+        cupom_existente = session.exec(select(Cupom).where(Cupom.nome == cupom_data.nome)).first()
+
+        # Se encontrar um cupom com o mesmo nome e for diferente do cupom atual, lança um erro
+        if cupom_existente and cupom_existente.id != cupom_id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Cupom já existe."
             )
         
-        if cupom_to_update.resgatado==True:
+        # Verificação de cupons resgatados
+        if cupom_to_update.resgatado == True:
             if cupom_data.nome != cupom_to_update.nome:
                 raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Cupom já resgatado não pode ter nome atualizado."
-                ) 
-                  
-        if cupom_to_update.resgatado==False:      
-        # Atualizar os campos fornecidos
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Cupom já resgatado não pode ter nome atualizado."
+                )
+
+        # Se o cupom não foi resgatado, permite atualização do nome
+        if cupom_to_update.resgatado == False:
             if cupom_data.nome:
                 cupom_to_update.nome = cupom_data.nome
         
+        # Atualizar os outros campos do cupom
         if cupom_data.valor:
             cupom_to_update.valor = cupom_data.valor
         if cupom_data.tipo:
             cupom_to_update.tipo = cupom_data.tipo
-        if cupom_data.tipo==False:
+        if cupom_data.tipo == False:
             cupom_to_update.tipo = cupom_data.tipo 
-            
         if cupom_data.quantidade_de_ultilizacao:
             cupom_to_update.quantidade_de_ultilizacao = cupom_data.quantidade_de_ultilizacao
-              
+
         # Salvar as alterações no banco de dados
         session.add(cupom_to_update)
         session.commit()
         session.refresh(cupom_to_update)
 
-        return {"message": "Cupom atualizada com sucesso!", "cupoms": cupom_to_update}
-    
+        return {"message": "Cupom atualizado com sucesso!", "cupom": cupom_to_update}

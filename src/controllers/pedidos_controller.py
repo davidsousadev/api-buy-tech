@@ -347,19 +347,13 @@ def cancelar_pedido_por_id(
             # Verifica se o cliente existe
             sttm = select(Cupom).where(Cupom.nome == pedido.cupom_de_desconto)
             cupom_de_desconto_resgatado = session.exec(sttm).first()
-            if not cupom_de_desconto_resgatado:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Cupom não encontrado."
-                )
-            
             if cupom_de_desconto_resgatado:
-                cupom_de_desconto_resgatado.quantidade_de_ultilizacao -= 1
+                cupom_de_desconto_resgatado.quantidade_de_ultilizacao += 1
                 
                 # Salvar as alterações no banco de dados
-                session.add(pedido)
+                session.add(cupom_de_desconto_resgatado)
                 session.commit()
-                session.refresh(pedido)
+                session.refresh(cupom_de_desconto_resgatado)
                   
         # Verificar condições do pedido
         if pedido.status and len(pedido.codigo) != 6:

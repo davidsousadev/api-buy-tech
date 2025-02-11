@@ -1,19 +1,26 @@
 from typing import Annotated
-from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password, verifica_pagamento, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from decouple import config
-from src.models.clientes_models import SignInClienteRequest, SignUpClienteRequest, Cliente, UpdateClienteRequest, ClienteResponse
-from src.models.operacoes_models import Operacao, BaseOperacao
+from sqlmodel import Session, select
+from passlib.context import CryptContext
+
+from sqlmodel import Session, select, func
+
+from src.auth_utils import get_logged_cliente,  verifica_pagamento, get_logged_admin
+from src.database import get_engine
+from src.models.clientes_models import Cliente
+from src.models.operacoes_models import Operacao
 from src.models.pedidos_models import Pedido
 from src.models.carrinhos_models import Carrinho
-from src.database import get_engine
-from sqlmodel import Session, select, func
-from passlib.context import CryptContext
-import jwt
+from src.models.admins_models import Admin
 
+
+EMAIL = config('EMAIL')
+KEY_EMAIL = config('KEY_EMAIL')
+URL = config('URL')
 SECRET_KEY = config('SECRET_KEY')
-
 KEY_STORE = config('KEY_STORE')
+
 router = APIRouter()
 
 """
@@ -322,3 +329,29 @@ async def pendencias_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged
             if pedido.status==True and len(pedido.codigo) !=6:
                 pendencias.append(pedido)
         return pendencias
+    
+# Operaçoes Admin
+# Realiza as apoerações    
+# Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)
+# Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
+# Lista receitas do Sistema
+@router.get("/receitas/admin")
+def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado! Apenas administradores podem listar receitas."
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Operacao).where(Operacao.motivo==3,
+                                           Operacao.tipo==2) # Pagamentos
+        pagamentos = session.exec(statement).all()
+
+        if pagamentos:
+                  return pagamentos  
+        if not pagamentos:
+            raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Nenhum pagamento Realizado"
+                )
