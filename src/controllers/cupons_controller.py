@@ -28,7 +28,7 @@ def verificar_cupons( cupom_nome: str):
         cupom = session.exec(statement).first()
         if cupom:
             return {
-                "cupom": {cupom}
+                "cupom": cupom
                 }
         else:
             return {

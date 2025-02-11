@@ -1,6 +1,6 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select, and_
+from sqlmodel import Session, select, and_, func
 from src.auth_utils import get_logged_admin, get_logged_cliente
 from src.database import get_engine
 from src.models.clientes_models import Cliente
@@ -27,7 +27,10 @@ def listar_carrinho(
         )
     
     with Session(get_engine()) as session:
-        statement = select(Carrinho).where(Carrinho.cliente_id == Cliente.id, Carrinho.status == False)   
+        statement = select(Carrinho).where(Carrinho.cliente_id == Cliente.id,
+                                           Carrinho.status==False,
+                                           func.length(Carrinho.codigo) == 0
+                                           )   
         itens = session.exec(statement).all()
         if itens:
             return itens
@@ -111,39 +114,36 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
         # Verifica se o produto já está no carrinho
         sttm = select(Carrinho).where(Carrinho.cliente_id == cliente.id, Carrinho.produto_codigo == carrinho_data.produto_codigo)
         carrinho = session.exec(sttm).first()
-        
+        # Produto no carrinho
+        # carrinho.status==False # Não esta em pedido
+        # carrinho.status==True # Esta em pedido
+        #
         if carrinho and carrinho.status==False and carrinho.quantidade != 0 and carrinho.codigo == "":
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Item já está no carrinho!"
             )
            
-        if carrinho and carrinho.status==True and carrinho.codigo != "" and carrinho.quantidade != 0:
+        if carrinho and carrinho.status==True and carrinho.quantidade != 0 and len(carrinho.codigo) > 6:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Item já está em pedido e não foi pago!"
             )
-        if carrinho and carrinho.status==True and len(carrinho.codigo) > 6:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Item já foi pago!"
-            )
             
         else:
-            if carrinho and carrinho_data.quantidade != 0 and carrinho.quantidade != 0:
-                carrinho.quantidade=carrinho_data.quantidade
-                carrinho.status=False
-            else:
-                if not carrinho:
-                    
-                    carrinho = Carrinho(
-                        produto_codigo=carrinho_data.produto_codigo,
-                        cliente_id=carrinho_data.cliente_id,
-                        quantidade=carrinho_data.quantidade,
-                        codigo="",
-                        status=False,
-                        preco=produto.preco
-                        )
+            if carrinho.status==True and carrinho.codigo == "":
+                carrinho.status = False
+                carrinho.quantidade = carrinho_data.quantidade
+                carrinho.preco = produto.preco
+            else:    
+                carrinho = Carrinho(
+                            produto_codigo=carrinho_data.produto_codigo,
+                            cliente_id=carrinho_data.cliente_id,
+                            quantidade=carrinho_data.quantidade,
+                            codigo="",
+                            status=False,
+                            preco=produto.preco
+                            )
             
         session.add(carrinho)
         session.commit()
@@ -151,9 +151,9 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
         return carrinho
 
 # Atualizar itens no carrinho
-@router.patch("/{item_id}")
+@router.patch("/{carrinho_id}")
 def atualizar_item_no_carrinho_por_id(
-    item_id: int,
+    carrinho_id: int,
     carrinho_data: UpdateCarrinhoRequest,
     cliente: Annotated[Cliente, Depends(get_logged_cliente)]
 ):
@@ -165,7 +165,7 @@ def atualizar_item_no_carrinho_por_id(
         
     with Session(get_engine()) as session:
         # Verifica se o produto existe
-        sttm = select(Produto).where(Produto.id == item_id)
+        sttm = select(Produto).where(Produto.id == carrinho_data.produto_codigo)
         produto = session.exec(sttm).first()
         if not produto:
             raise HTTPException(
@@ -183,7 +183,7 @@ def atualizar_item_no_carrinho_por_id(
                     detail="Pedido maior que estoque!"
                 ) 
                 
-        sttm = select(Carrinho).where(Carrinho.id == item_id)
+        sttm = select(Carrinho).where(Carrinho.id == carrinho_id)
         item_to_update = session.exec(sttm).first()
 
         if not item_to_update:
@@ -192,15 +192,14 @@ def atualizar_item_no_carrinho_por_id(
                 detail="Item não encontrado."
             )
             
-        if item_to_update.status==True and item_to_update.codigo !="":
+        if item_to_update.status==True and len(item_to_update.codigo) > 6:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Item não pode ser atualizado pois já esta em pedido."
             )
             
-              
             
-        if carrinho_data.quantidade==0:
+        if carrinho_data.quantidade==0 and len(item_to_update.codigo) == 0:
             item_to_update.status = True
             
             session.add(item_to_update)

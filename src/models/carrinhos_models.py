@@ -12,5 +12,5 @@ class Carrinho(BaseCarrinho, table=True):
     codigo: str = Field(default="") # Codigo de compra realizada com sucesso
     preco: float = Field(default=None)
     
-class UpdateCarrinhoRequest(SQLModel):
-    quantidade: int = Field(default=1)
+class UpdateCarrinhoRequest(BaseCarrinho):
+    id: int

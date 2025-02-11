@@ -1,7 +1,7 @@
 import string, random
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select, and_
+from sqlmodel import Session, select, and_, func
 from src.auth_utils import get_logged_admin, get_logged_cliente
 from src.database import get_engine
 from src.models.pedidos_models import BasePedido, Pedido, UpdatePedidoRequest
@@ -78,7 +78,30 @@ def listar_pedidos(
         pedidos = session.exec(statement).all()
 
         return pedidos
-   
+
+# Lista pedidos dos clientes por id
+@router.get("/{pedido_id}")
+def listar_pedidos_por_id(
+    cliente: Annotated[Cliente, Depends(get_logged_cliente)],
+    pedido_id: int 
+):
+    if not cliente.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Pedido).where(Pedido.cliente == cliente.id, Pedido.id == pedido_id)
+        pedido = session.exec(statement).first()
+        if pedido:
+            return pedido
+        else:
+            raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Pedido invalido!"
+        )
+
 # Cadastra pedidos dos clientes
 @router.post("")
 def cadastrar_pedido(
@@ -115,7 +138,10 @@ def cadastrar_pedido(
                 pedido_em_aberto = pedido
 
         # Verifica os itens no carrinho do cliente
-        statement = select(Carrinho).where(Carrinho.cliente_id == cliente.id)
+        statement = select(Carrinho).where(Carrinho.cliente_id == cliente.id, 
+                                           Carrinho.status == False, 
+                                           func.length(Carrinho.codigo) != 6
+                                           )
         itens = session.exec(statement).all()
         if not itens:
             raise HTTPException(
@@ -154,11 +180,15 @@ def cadastrar_pedido(
 
         # Aplica o cupom de desconto, se fornecido
         desconto = 0
+
+        # Acrescimo do frete
+        valor_items += pedido_data.frete
+
         if pedido_data.cupom_de_desconto:
             statement = select(Cupom).where(Cupom.nome == pedido_data.cupom_de_desconto)
             cupom = session.exec(statement).first()
             if cupom:
-                if cupom.quantidade_de_utilizacao == 0:
+                if cupom.quantidade_de_ultilizacao == 0:
                     raise HTTPException(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="A quantidade máxima de cupons já foi resgatada."
@@ -203,18 +233,26 @@ def cadastrar_pedido(
                 cupom_de_desconto=pedido_data.cupom_de_desconto,
                 pontos_fidelidade_resgatados=pontos_fidelidade_resgatados,
                 status=True,
+                frete=pedido_data.frete,
                 opcao_de_pagamento=pedido_data.opcao_de_pagamento,
                 codigo=codigo_pedido,
+                token_pagamento=token_pagamento,
                 total=valor_items
             )
             session.add(pedido)
         else:
+            # print("Atualizando pedido Cancelado")
             # Atualizar pedido em aberto
             pedido_em_aberto.produtos = f"{ids_itens_carrinho}"
-            pedido_em_aberto.total = valor_items
+            pedido_em_aberto.frete=pedido_data.frete
+            pedido_em_aberto.status=True
+            pedido_em_aberto.criacao=datetime.now().strftime('%Y-%m-%d')
             pedido_em_aberto.cupom_de_desconto = pedido_data.cupom_de_desconto
             pedido_em_aberto.pontos_fidelidade_resgatados = pontos_fidelidade_resgatados
             pedido_em_aberto.opcao_de_pagamento = pedido_data.opcao_de_pagamento
+            pedido_em_aberto.total=valor_items
+            pedido_em_aberto.token_pagamento=token_pagamento
+            pedido_em_aberto.codigo=codigo_pedido
             session.add(pedido_em_aberto)
         session.commit()
 
@@ -224,16 +262,19 @@ def cadastrar_pedido(
                 item.status = True
                 session.add(item)
         session.commit()
-
+        
         # Envia e-mail de confirmação
         corpo_do_pedido = template_pedido_realizado(
             cliente.nome, 
             numero_do_pedido, 
             url_pagamento, 
             itens_carrinho, 
+            pedido_data.frete,
+            pedido_data.opcao_de_pagamento,
             desconto, 
             pedido_data.cupom_de_desconto, 
-            pontos_fidelidade_resgatados)
+            pontos_fidelidade_resgatados
+            )
         
         email = Email(
             nome_remetente="Buy Tech",
@@ -251,8 +292,10 @@ def cadastrar_pedido(
                              email.corpo, 
                              importante=True, 
                              html=True)
+        
         if envio:
             return {"message": "Pedido realizado com sucesso! E-mail com dados enviado."}
+        
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -281,15 +324,17 @@ def cancelar_pedido_por_id(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Pedido não localizado!"
             )
+        # Reverter possivel uso de pontos fidelidade
         if pedido.pontos_fidelidade_resgatados != 0:
             # Verifica se o cliente existe
-            sttm = select(Cliente).where(Cliente.id == cliente.id)
+            sttm = select(Cliente).where(Cliente.id == pedido.cliente)
             cliente = session.exec(sttm).first()
             if not cliente:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Cliente não encontrado."
+                    detail="Cliente não pode cancelar pedido de outro cliente."
                 )
+            
             if cliente:
                 cliente.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
                 # Salvar as alterações no banco de dados
@@ -297,6 +342,7 @@ def cancelar_pedido_por_id(
                 session.commit()
                 session.refresh(pedido)  
         
+        # Reverter possivel uso de cupom de desconto
         if pedido.cupom_de_desconto != "":
             # Verifica se o cliente existe
             sttm = select(Cupom).where(Cupom.nome == pedido.cupom_de_desconto)
@@ -324,7 +370,6 @@ def cancelar_pedido_por_id(
             if isinstance(produtos_ids, list):
                 produtos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id)
                 produtos = session.exec(produtos_query).all()
-                
                 for produto in produtos:
                     produto.status = False
                     session.add(produto)

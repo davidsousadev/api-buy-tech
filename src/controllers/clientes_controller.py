@@ -183,7 +183,7 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
             complemento=cliente_data.complemento,
             telefone=cliente_data.telefone,
             cep=cliente_data.cep,
-            pontos_fidelidade=0,
+            pontos_fidelidade=10000, # Alterar posteriormente
             clube_fidelidade=False,
             cod_indicacao=link,
             status=True
@@ -274,21 +274,20 @@ def logar_clientes(signin_data: SignInClienteRequest):
 def autenticar_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
   return cliente
 
-# Atualiza clientes por id
-@router.patch("/atualizar/{cliente_id}")
-def atualizar_clientes_por_id(
-    cliente_id: int, 
+# Atualiza clientes
+@router.patch("")
+def atualizar_clientes_por(
     cliente_data: UpdateClienteRequest, 
     cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     
-    if cliente.id != cliente_id:
+    if not cliente:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
 
     with Session(get_engine()) as session:
-        sttm = select(Cliente).where(Cliente.id == cliente_id)
+        sttm = select(Cliente).where(Cliente.id == cliente.id)
         cliente_to_update = session.exec(sttm).first()
 
         if not cliente_to_update:

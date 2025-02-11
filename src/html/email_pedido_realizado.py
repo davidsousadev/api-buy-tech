@@ -1,8 +1,12 @@
-def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, desconto=0, nome_cupom=None, pontos_resgatados=0):
+def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, frete, opcao_de_pagamento, desconto=0, nome_cupom=None, pontos_resgatados=0):
     # Calcular o total dos itens do pedido
     total_itens = sum(item["preco"] * item["quantidade"] for item in itens_carrinho)
-    total_com_desconto = max(total_itens - desconto - pontos_resgatados, 0)
-
+    total_com_desconto = max(((total_itens - desconto - pontos_resgatados)+frete), 0)
+    if opcao_de_pagamento==True:
+        opcao_de_pagamento = "Boleto"
+    else:
+        opcao_de_pagamento = "À vista"
+        
     # Gerar os detalhes dos itens
     itens_html = ""
     for item in itens_carrinho:
@@ -39,7 +43,9 @@ def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, desconto
             <h2>Olá, {nome}</h2>
             <p>Seu pedido foi realizado com sucesso! Seguem os detalhes:</p>
             <p><strong>Número do Pedido:</strong> {numero_pedido}</p>
+            <p><strong>Opção de pagamento:</strong> {opcao_de_pagamento}</p>
             <p><strong>Total dos Itens:</strong> R$ {total_itens:.2f}</p>
+            <p><strong>Frete:</strong> R$ {frete:.2f}</p>
             <p><strong>Desconto:</strong> R$ {desconto:.2f} ({nome_cupom or 'Sem cupom'})</p>
             <p><strong>Total com Desconto:</strong> R$ {total_com_desconto:.2f}</p>
             <h3>Itens do Pedido</h3>

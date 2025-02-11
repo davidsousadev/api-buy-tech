@@ -7,7 +7,7 @@ from src.models.operacoes_models import Operacao, BaseOperacao
 from src.models.pedidos_models import Pedido
 from src.models.carrinhos_models import Carrinho
 from src.database import get_engine
-from sqlmodel import Session, select
+from sqlmodel import Session, select, func
 from passlib.context import CryptContext
 import jwt
 
@@ -179,15 +179,15 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 
             statement = select(Pedido).where(Pedido.cliente == cliente.id,
                                              Pedido.status == True,
-                                             Pedido.codigo !=""
+                                             func.length(Pedido.codigo) != 6
                                              )
+            
             pedido = session.exec(statement).first()
             if pedido and len(pedido.codigo) > 6 and pedido.codigo !="" and pedido.status==True:
                 # Encontrou, então verifica o codigo de confirmação
                 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
                 is_correct = pwd_context.verify(codigo_de_confirmacao_token["codigo_de_confirmacao"], pedido.codigo)
-
                 if not is_correct:
                   raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, 
@@ -198,10 +198,13 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 produtos_ids = eval(pedido.produtos)  
 
                 if isinstance(produtos_ids, list):
-                    produtos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id)
+                    produtos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id,
+                                                            Carrinho.status == True,
+                                                            func.length(Carrinho.codigo) >= 6)
                     produtos = session.exec(produtos_query).all()
 
                     for produto in produtos:
+                        print(produto.codigo, produto.id)
                         produto.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
                         session.add(produto)
 
@@ -240,8 +243,9 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                     session.refresh(operacao_indicacao)
             
             # Operação pagamento
-            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], Operacao.motivo==3,
-                                Operacao.tipo==2)
+            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"],       
+                                               Operacao.motivo==3,
+                                               Operacao.tipo==2)
             operacao = session.exec(statement).first()
 
             if operacao:
@@ -274,9 +278,11 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             else:
                 cliente_to_update.pontos_fidelidade += 1
                 cashback=1
-            
+            print(codigo_de_confirmacao_token["codigo_de_confirmacao"])
             # Cria o operacao de caskback
-            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], Operacao.motivo==2,Operacao.tipo==1)
+            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], 
+                                               Operacao.motivo==2,
+                                               Operacao.tipo==1)
             operacao = session.exec(statement).first()
 
             if operacao:
@@ -296,9 +302,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             session.commit()
             session.refresh(operacao_caskback)
 
-            return {
-                    "mensage": "Pagamento realizado com sucesso!"
-                    }
+            return { "mensage": "Pagamento realizado com sucesso!" }
 
 # Operação de retornar as pendênçias           
 @router.get("/pendencias")

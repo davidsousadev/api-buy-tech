@@ -6,6 +6,7 @@ import json
 
 class BasePedido(SQLModel):
     cliente: int = Field(default=None, foreign_key="cliente.id")
+    frete: int = Field(default=0)
     cupom_de_desconto: str = Field(default="") # Se não for passado nenhum cupom fica vazio
     opcao_de_pagamento: bool = Field(default=False) # False para pix e true para boleto
     
@@ -18,6 +19,7 @@ class Pedido(BasePedido, table=True):
     status: bool = Field(default=True) # Se esperando pagamento ou cancelada
     pontos_fidelidade_resgatados: int
     total: float
+    token_pagamento: str
     codigo: str # Se paga ou não
     @property
     def tags_list(self) -> List[str]:
