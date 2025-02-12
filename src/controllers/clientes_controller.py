@@ -190,7 +190,7 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
         )
         
         # Gera a URL de confirmação
-        url = f"{URL}/emails/confirmado/?codigo={codigo}"
+        url = f"{URL}/emails/confirmado/index.html?codigo={codigo}"
         corpo_de_confirmacao = template_confirmacao(cliente.nome, url)
 
         # Envia o e-mail de confirmação

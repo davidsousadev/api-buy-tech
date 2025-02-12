@@ -67,7 +67,7 @@ def listar_revendedores(admin: Annotated[Admin, Depends(get_logged_admin)]):
         return [RevendedorResponse.model_validate(u) for u in revendedores]
   
 # Cadastrar Revendedores        
-@router.post('/cadastrar')
+@router.post("/cadastrar")
 def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
     with Session(get_engine()) as session:
         
@@ -131,7 +131,7 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
                 status=True,
                 )
         # Gera a URL de confirmação
-        url = f"{URL}/emails/confirmado/?codigo={codigo}"
+        url = f"{URL}/emails/confirmado/index.html?codigo={codigo}"
         corpo_de_confirmacao = template_confirmacao(revendedor.razao_social, url)
 
         # Envia o e-mail de confirmação

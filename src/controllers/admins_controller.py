@@ -126,7 +126,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
                 admin=True
                 )
         # Gera a URL de confirmação
-        url = f"{URL}/emails/confirmado/?codigo={codigo}"
+        url = f"{URL}/emails/confirmado/index.html?codigo={codigo}"
         corpo_de_confirmacao = template_confirmacao(admin.nome, url)
 
         # Envia o e-mail de confirmação

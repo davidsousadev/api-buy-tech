@@ -76,7 +76,7 @@ class ClienteResponse(BaseModel):
     email: str
     cod_confirmacao_email: str
     criacao_de_conta: str
-    pontos_fidelidade: int
+    pontos_fidelidade: float
     clube_fidelidade: bool
     cod_indicacao: int
     status: bool

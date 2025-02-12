@@ -20,9 +20,6 @@ class SignUpAdminRequest(BaseAdmin):
   
 # Retorno dos dados
 class AdminData(BaseAdmin):
-  pontos_fidelidade: int
-  clube_fidelidade: bool
-  cod_indicacao: int
   status: bool
   admin: bool
   cpf: str      

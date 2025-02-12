@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from src.database import get_engine
 from src.models.clientes_models import Cliente
 from src.models.admins_models import Admin
+from src.models.revendedores_models import Revendedor
 from src.html.email_redefinir_senha import template_redefinir_senha
 
 from src.auth_utils import hash_password
@@ -37,10 +38,12 @@ def email_confirmado(codigo: str):
     with Session(get_engine()) as session:
         clientes = select(Cliente).where(Cliente.cod_confirmacao_email == codigo)
         admins = select(Admin).where(Admin.cod_confirmacao_email == codigo)
+        revendedores = select(Revendedor).where(Revendedor.cod_confirmacao_email == codigo)
         cliente_to_update = session.exec(clientes).first()
         admin_to_update = session.exec(admins).first()
+        revendedor_to_update = session.exec(revendedores).first()
 
-        if not cliente_to_update and not admin_to_update:
+        if not cliente_to_update and not admin_to_update and not revendedor_to_update:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Codigo de recuperação invalido!"
@@ -73,8 +76,24 @@ def email_confirmado(codigo: str):
             session.add(admin_to_update)
             session.commit()
             session.refresh(admin_to_update)
+
+        if revendedor_to_update:
+            if revendedor_to_update.cod_confirmacao_email=="Confirmado":
+                raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="E-mail já confirmado."
+                )  
+            if len(revendedor_to_update.cod_confirmacao_email)>6:
+                revendedor_to_update.email=codigo
+                
+            revendedor_to_update.cod_confirmacao_email = "Confirmado"
+            session.add(revendedor_to_update)
+            session.commit()
+            session.refresh(revendedor_to_update)
             
-        return RedirectResponse(url=f"{URL}/logar.html")
+        return {
+                "email": True
+                }
     
 # Recuperar email
 @router.get('/recuperar_email', status_code=status.HTTP_200_OK)
