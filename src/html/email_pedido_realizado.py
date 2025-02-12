@@ -1,25 +1,34 @@
-def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, frete, opcao_de_pagamento, desconto=0, nome_cupom=None, pontos_resgatados=0):
-    # Calcular o total dos itens do pedido
-    total_itens = sum(item["preco"] * item["quantidade"] for item in itens_carrinho)
-    total_com_desconto = max(((total_itens - desconto - pontos_resgatados)+frete), 0)
-    if opcao_de_pagamento==True:
+def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, frete, opcao_de_pagamento, desconto=0.0, nome_cupom=None, pontos_resgatados=0):
+    # Converte valores para float para garantir a precisão
+    frete = float(frete)
+    desconto = float(desconto)
+    pontos_resgatados = float(pontos_resgatados)
+    
+    total_itens = sum(float(item["preco"]) * float(item["quantidade"]) for item in itens_carrinho)
+    total_com_desconto = max((total_itens - desconto - pontos_resgatados + frete), 0.0)
+    
+    # Traduz a opção de pagamento para o texto correspondente
+    if opcao_de_pagamento is True:
         opcao_de_pagamento = "Boleto"
     else:
         opcao_de_pagamento = "À vista"
         
-    # Gerar os detalhes dos itens
+    # Gera os detalhes dos itens em HTML
     itens_html = ""
     for item in itens_carrinho:
+        preco = float(item["preco"])
+        quantidade = float(item["quantidade"])
+        subtotal = preco * quantidade
         itens_html += f'''
         <tr>
             <td>{item["nome"]}</td>
-            <td>{item["quantidade"]}</td>
-            <td>R$ {item["preco"]:.2f}</td>
-            <td>R$ {item["preco"] * item["quantidade"]:.2f}</td>
+            <td>{int(quantidade)}</td>
+            <td>R$ {preco:.2f}</td>
+            <td>R$ {subtotal:.2f}</td>
         </tr>
         '''
 
-    # Retornar o template HTML do pedido
+    # Retorna o template HTML do pedido
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -46,6 +55,7 @@ def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, frete, o
             <p><strong>Opção de pagamento:</strong> {opcao_de_pagamento}</p>
             <p><strong>Total dos Itens:</strong> R$ {total_itens:.2f}</p>
             <p><strong>Frete:</strong> R$ {frete:.2f}</p>
+            <p><strong>Pontos Fidelidade Resgatados:</strong> R$ {pontos_resgatados:.2f}</p>
             <p><strong>Desconto:</strong> R$ {desconto:.2f} ({nome_cupom or 'Sem cupom'})</p>
             <p><strong>Total com Desconto:</strong> R$ {total_com_desconto:.2f}</p>
             <h3>Itens do Pedido</h3>

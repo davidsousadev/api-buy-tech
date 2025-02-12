@@ -111,44 +111,53 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                     detail="Pedido maior que estoque!"
                 )             
             
-        # Verifica se o produto já está no carrinho
-        sttm = select(Carrinho).where(Carrinho.cliente_id == cliente.id, Carrinho.produto_codigo == carrinho_data.produto_codigo)
-        carrinho = session.exec(sttm).first()
-        # Produto no carrinho
-        # carrinho.status==False # Não esta em pedido
-        # carrinho.status==True # Esta em pedido
-        #
-        if carrinho and carrinho.status==False and carrinho.quantidade != 0 and carrinho.codigo == "":
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Item já está no carrinho!"
-            )
-           
-        if carrinho and carrinho.status==True and carrinho.quantidade != 0 and len(carrinho.codigo) > 6:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Item já está em pedido e não foi pago!"
-            )
-            
-        else:
-            if carrinho.status==True and carrinho.codigo == "":
-                carrinho.status = False
-                carrinho.quantidade = carrinho_data.quantidade
-                carrinho.preco = produto.preco
-            else:    
-                carrinho = Carrinho(
-                            produto_codigo=carrinho_data.produto_codigo,
-                            cliente_id=carrinho_data.cliente_id,
-                            quantidade=carrinho_data.quantidade,
-                            codigo="",
-                            status=False,
-                            preco=produto.preco
-                            )
-            
-        session.add(carrinho)
-        session.commit()
-        session.refresh(carrinho)
-        return carrinho
+        sttm = select(Carrinho).where(
+        Carrinho.cliente_id == cliente.id,
+        Carrinho.produto_codigo == carrinho_data.produto_codigo
+    )
+    carrinho = session.exec(sttm).all()
+
+    if carrinho:
+        for item in carrinho:
+            # Produto no carrinho, mas ainda não foi comprado
+            if not item.status and item.quantidade != 0 and item.codigo == "":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Item já está no carrinho!"
+                )
+
+            # Produto está em pedido e não foi pago
+            if item.status and item.quantidade != 0 and len(item.codigo) > 6:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Item já está em pedido e não foi pago!"
+                )
+
+            # Produto foi removido do carrinho, mas ainda pode ser recuperado
+            if item.status and len(item.codigo) < 6:
+                item.status = False
+                item.quantidade = carrinho_data.quantidade
+                item.preco = produto.preco
+                session.add(item)
+                session.commit()
+                session.refresh(item)
+                return item
+
+    # Adiciona um novo item ao carrinho
+    novo_carrinho = Carrinho(
+        produto_codigo=carrinho_data.produto_codigo,
+        cliente_id=carrinho_data.cliente_id,
+        quantidade=carrinho_data.quantidade,
+        codigo="",
+        status=False,
+        preco=produto.preco
+    )
+
+    session.add(novo_carrinho)
+    session.commit()
+    session.refresh(novo_carrinho)
+    
+    return novo_carrinho
 
 # Atualizar itens no carrinho
 @router.patch("/{carrinho_id}")
@@ -220,5 +229,5 @@ def atualizar_item_no_carrinho_por_id(
             session.commit()
             session.refresh(item_to_update)
             
-            return {"message": "Item atualizado com sucesso!", "carrinho": item_to_update}
+            return {"message": "Item do carrinho atualizado com sucesso!", "carrinho": item_to_update}
         

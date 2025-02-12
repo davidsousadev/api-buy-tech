@@ -1,7 +1,7 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
-from src.auth_utils import get_logged_admin, hash_password, SECRET_KEY, ALGORITHM, ACCESS_EXPIRES, REFRESH_EXPIRES
+from sqlmodel import Session, select, desc
+from src.auth_utils import get_logged_admin
 from src.database import get_engine
 from src.models.admins_models import Admin
 from src.models.categorias_models import Categoria
@@ -61,6 +61,9 @@ def listar_produtos(
             statement = statement.where(Produto.marca.contains(marca))
         if descricao:
             statement = statement.where(Produto.descricao.contains(descricao))
+
+        # Ordenar produtos com status=True primeiro
+        statement = statement.order_by(desc(Produto.status))
 
         produtos = session.exec(statement).all()
         return produtos

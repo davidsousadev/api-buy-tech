@@ -38,6 +38,52 @@ def gerar_codigo_confirmacao(tamanho=6):
 async def options_pedidos():
     return { "methods": ["GET", "POST", "PATCH"] }
 
+# Administradores lista pedidos dos clientes
+@router.get("/admin", response_model=List[Pedido])
+def listar_pedidos_admin(
+    admin: Annotated[Admin, Depends(get_logged_admin)],
+    id: int | None = None,
+    produtos: str | None = None,
+    total: float | None = None,
+    cupom_de_desconto: str | None = None,
+    criacao: str | None = None,
+    cliente: int | None = None,
+    status: bool | None = None,
+    codigo: str | None = None
+):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+
+    with Session(get_engine()) as session:
+        statement = select(Pedido)
+        filtros = []
+
+        if id is not None:
+            filtros.append(Pedido.id == id)
+        if produtos is not None:
+            filtros.append(Pedido.produtos == produtos)
+        if total is not None:
+            filtros.append(Pedido.total == total)
+        if cupom_de_desconto is not None:
+            filtros.append(Pedido.cupom_de_desconto == cupom_de_desconto)
+        if criacao is not None:
+            filtros.append(Pedido.criacao == criacao)
+        if cliente is not None:
+            filtros.append(Pedido.cliente == cliente)
+        if status is not None:
+            filtros.append(Pedido.status == status)
+        if codigo is not None:
+            filtros.append(Pedido.codigo == codigo)
+        
+        if filtros:
+            statement = statement.where(and_(*filtros))
+    
+        pedidos = session.exec(statement).all()
+        return pedidos
+
 # Lista pedidos dos clientes
 @router.get("", response_model=List[Pedido])
 def listar_pedidos(
@@ -129,7 +175,7 @@ def cadastrar_pedido(
         pedidos_do_cliente = session.exec(pedidos).all()
         pedido_em_aberto = False
         for pedido in pedidos_do_cliente:
-            if pedido.status==True and len(pedido.codigo) !=6:
+            if pedido.status is True and len(pedido.codigo) != 6:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cliente tem pedidos não pagos."
@@ -138,10 +184,11 @@ def cadastrar_pedido(
                 pedido_em_aberto = pedido
 
         # Verifica os itens no carrinho do cliente
-        statement = select(Carrinho).where(Carrinho.cliente_id == cliente.id, 
-                                           Carrinho.status == False, 
-                                           func.length(Carrinho.codigo) != 6
-                                           )
+        statement = select(Carrinho).where(
+            Carrinho.cliente_id == cliente.id, 
+            Carrinho.status == False, 
+            func.length(Carrinho.codigo) != 6
+        )
         itens = session.exec(statement).all()
         if not itens:
             raise HTTPException(
@@ -149,10 +196,10 @@ def cadastrar_pedido(
                 detail="O carrinho está vazio."
             )
 
-        # Inicializa variáveis para o cálculo do total
+        # Inicializa variáveis para o cálculo do total como float
         itens_carrinho = []
         ids_itens_carrinho = []
-        valor_items = 0
+        valor_items = 0.0
 
         for item in itens:
             if not item.status:
@@ -168,8 +215,13 @@ def cadastrar_pedido(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"Quantidade solicitada para o produto '{produto.nome}' excede o estoque disponível!"
                     )
+                # Realiza a multiplicação com ponto flutuante
                 valor_items += item.preco * item.quantidade
-                itens_carrinho.append({"nome": produto.nome, "quantidade": item.quantidade, "preco": item.preco})
+                itens_carrinho.append({
+                    "nome": produto.nome,
+                    "quantidade": item.quantidade,
+                    "preco": item.preco
+                })
                 ids_itens_carrinho.append(item.produto_codigo)
 
         if valor_items == 0:
@@ -179,9 +231,9 @@ def cadastrar_pedido(
             )
 
         # Aplica o cupom de desconto, se fornecido
-        desconto = 0
+        desconto = 0.0
 
-        # Acrescimo do frete
+        # Acrescimo do frete (presumindo que pedido_data.frete seja um float)
         valor_items += pedido_data.frete
 
         if pedido_data.cupom_de_desconto:
@@ -193,7 +245,7 @@ def cadastrar_pedido(
                         status_code=status.HTTP_404_NOT_FOUND,
                         detail="A quantidade máxima de cupons já foi resgatada."
                     )
-                valor_cupom = cupom.valor
+                valor_cupom = cupom.valor  # Pode ser float
                 tipo = cupom.tipo  # False para porcentagem, True para valor fixo
 
                 if tipo is False:
@@ -204,8 +256,8 @@ def cadastrar_pedido(
             else:
                 pedido_data.cupom_de_desconto = ""
 
-        # Aplica pontos de fidelidade
-        pontos_fidelidade_resgatados = min(cliente.pontos_fidelidade, int(valor_items))
+        # Aplica pontos de fidelidade corretamente sem conversão desnecessária
+        pontos_fidelidade_resgatados = min(cliente.pontos_fidelidade, valor_items)
         valor_items -= pontos_fidelidade_resgatados
         cliente.pontos_fidelidade -= pontos_fidelidade_resgatados
         session.add(cliente)
@@ -215,13 +267,22 @@ def cadastrar_pedido(
         codigo_de_confirmacao = gerar_codigo_confirmacao()
         numero_do_pedido = f"{KEY_STORE}-{cliente.id}-{valor_items}"
         codigo_pedido = hash_password(codigo_de_confirmacao)
-        codigo_de_confirmacao_token = f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-{codigo_de_confirmacao}-{pedido_data.cupom_de_desconto}-{pontos_fidelidade_resgatados}"
+        codigo_de_confirmacao_token = (
+            f"{numero_do_pedido}-{pedido_data.opcao_de_pagamento}-"
+            f"{codigo_de_confirmacao}-{pedido_data.cupom_de_desconto}-"
+            f"{pontos_fidelidade_resgatados}"
+        )
 
         # Gera token de pagamento
-        expires_at = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_EXPIRES if pedido_data.opcao_de_pagamento else REFRESH_EXPIRES)
-        
-        token_pagamento = jwt.encode({'sub': codigo_de_confirmacao_token, 'exp': expires_at}, key=SECRET_KEY, algorithm=ALGORITHM)
-        
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=ACCESS_EXPIRES if pedido_data.opcao_de_pagamento else REFRESH_EXPIRES
+        )
+        token_pagamento = jwt.encode(
+            {'sub': codigo_de_confirmacao_token, 'exp': expires_at},
+            key=SECRET_KEY,
+            algorithm=ALGORITHM
+        )
+
         url_pagamento = f"{URL}/operacoes/pagamentos/{token_pagamento}"
 
         # Cria ou atualiza o pedido
@@ -241,18 +302,17 @@ def cadastrar_pedido(
             )
             session.add(pedido)
         else:
-            # print("Atualizando pedido Cancelado")
-            # Atualizar pedido em aberto
+            # Atualiza pedido em aberto
             pedido_em_aberto.produtos = f"{ids_itens_carrinho}"
-            pedido_em_aberto.frete=pedido_data.frete
-            pedido_em_aberto.status=True
-            pedido_em_aberto.criacao=datetime.now().strftime('%Y-%m-%d')
+            pedido_em_aberto.frete = pedido_data.frete
+            pedido_em_aberto.status = True
+            pedido_em_aberto.criacao = datetime.now().strftime('%Y-%m-%d')
             pedido_em_aberto.cupom_de_desconto = pedido_data.cupom_de_desconto
             pedido_em_aberto.pontos_fidelidade_resgatados = pontos_fidelidade_resgatados
             pedido_em_aberto.opcao_de_pagamento = pedido_data.opcao_de_pagamento
-            pedido_em_aberto.total=valor_items
-            pedido_em_aberto.token_pagamento=token_pagamento
-            pedido_em_aberto.codigo=codigo_pedido
+            pedido_em_aberto.total = valor_items
+            pedido_em_aberto.token_pagamento = token_pagamento
+            pedido_em_aberto.codigo = codigo_pedido
             session.add(pedido_em_aberto)
         session.commit()
 
@@ -262,7 +322,7 @@ def cadastrar_pedido(
                 item.status = True
                 session.add(item)
         session.commit()
-        
+
         # Envia e-mail de confirmação
         corpo_do_pedido = template_pedido_realizado(
             cliente.nome, 
@@ -274,8 +334,8 @@ def cadastrar_pedido(
             desconto, 
             pedido_data.cupom_de_desconto, 
             pontos_fidelidade_resgatados
-            )
-        
+        )
+
         email = Email(
             nome_remetente="Buy Tech",
             remetente=EMAIL,
@@ -284,25 +344,26 @@ def cadastrar_pedido(
             assunto="Pedido - Buy Tech",
             corpo=corpo_do_pedido
         )
-        envio = enviar_email(email.nome_remetente, 
-                             email.remetente, 
-                             email.senha, 
-                             email.destinatario, 
-                             email.assunto, 
-                             email.corpo, 
-                             importante=True, 
-                             html=True)
-        
+        envio = enviar_email(
+            email.nome_remetente, 
+            email.remetente, 
+            email.senha, 
+            email.destinatario, 
+            email.assunto, 
+            email.corpo, 
+            importante=True, 
+            html=True
+        )
+
         if envio:
             return {"message": "Pedido realizado com sucesso! E-mail com dados enviado."}
-        
         else:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Erro ao enviar o e-mail de confirmação."
             )
-  
-# Atualiza pedidos dos clientes                     
+
+# Cancelar pedidos dos clientes                     
 @router.patch("/{pedido_id}")
 def cancelar_pedido_por_id(
     pedido_id: int,
@@ -313,69 +374,61 @@ def cancelar_pedido_por_id(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
-        
+
     with Session(get_engine()) as session:
         # Selecionar o pedido
         pedidos_query = select(Pedido).where(Pedido.id == pedido_id, Pedido.cliente == cliente.id)
         pedido = session.exec(pedidos_query).first()
-        
+
         if not pedido:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Pedido não localizado!"
             )
-        # Reverter possivel uso de pontos fidelidade
+        # Reverter possível uso de pontos de fidelidade
         if pedido.pontos_fidelidade_resgatados != 0:
-            # Verifica se o cliente existe
             sttm = select(Cliente).where(Cliente.id == pedido.cliente)
-            cliente = session.exec(sttm).first()
-            if not cliente:
+            cliente_db = session.exec(sttm).first()
+            if not cliente_db:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Cliente não pode cancelar pedido de outro cliente."
                 )
-            
-            if cliente:
-                cliente.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
-                # Salvar as alterações no banco de dados
-                session.add(pedido)
-                session.commit()
-                session.refresh(pedido)  
-        
-        # Reverter possivel uso de cupom de desconto
+            cliente_db.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
+            session.add(cliente_db)
+            session.commit()
+            session.refresh(pedido)
+
+        # Reverter possível uso de cupom de desconto
         if pedido.cupom_de_desconto != "":
-            # Verifica se o cliente existe
             sttm = select(Cupom).where(Cupom.nome == pedido.cupom_de_desconto)
             cupom_de_desconto_resgatado = session.exec(sttm).first()
             if cupom_de_desconto_resgatado:
                 cupom_de_desconto_resgatado.quantidade_de_ultilizacao += 1
-                
-                # Salvar as alterações no banco de dados
                 session.add(cupom_de_desconto_resgatado)
                 session.commit()
                 session.refresh(cupom_de_desconto_resgatado)
-                  
-        # Verificar condições do pedido
+
+        # Verificar condições do pedido para cancelamento
         if pedido.status and len(pedido.codigo) != 6:
             pedido.codigo = ""
             pedido.status = False
-            produtos_ids = eval(pedido.produtos)  
+            produtos_ids = eval(pedido.produtos)
             
             if isinstance(produtos_ids, list):
-                produtos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id)
+                produtos_query = select(Carrinho).where(Carrinho.cliente_id == cliente.id)
                 produtos = session.exec(produtos_query).all()
                 for produto in produtos:
                     produto.status = False
                     session.add(produto)
             
-            # Salvar as alterações no banco de dados
             session.add(pedido)
             session.commit()
             session.refresh(pedido)
             
             return {"message": "Pedido e produtos cancelados com sucesso"}
         
-        if pedido and pedido.codigo=="":
+        if pedido and pedido.codigo == "":
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="O pedido não pode ser cancelado, pois já foi cancelado anteriormente!"
@@ -387,18 +440,11 @@ def cancelar_pedido_por_id(
                 detail="O pedido não pode ser cancelado, pois foi pago!"
             )
 
-# Administradores lista pedidos dos clientes
-@router.get("/admin", response_model=List[Pedido])
-def listar_pedidos(
+# Admin Cancela pedidos dos clientes                     
+@router.patch("/admin/{pedido_id}")
+def cancelar_pedido_por_id_admin(
+    pedido_id: int,
     admin: Annotated[Admin, Depends(get_logged_admin)],
-    id: int | None = None,
-    produtos: str | None = None,
-    total: float | None = None,
-    cupom_de_desconto: str | None = None,
-    criacao: str | None = None,
-    cliente: int | None = None,
-    status: bool | None = None,
-    codigo: str | None = None
 ):
     if not admin.admin:
         raise HTTPException(
@@ -407,28 +453,66 @@ def listar_pedidos(
         )
 
     with Session(get_engine()) as session:
-        statement = select(Pedido)
-        filtros = []
+        # Selecionar o pedido
+        pedidos_query = select(Pedido).where(Pedido.id == pedido_id)
+        pedido = session.exec(pedidos_query).first()
 
-        if id is not None:
-            filtros.append(Pedido.id == id)
-        if produtos is not None:
-            filtros.append(Pedido.produtos == produtos)
-        if total is not None:
-            filtros.append(Pedido.total == total)
-        if cupom_de_desconto is not None:
-            filtros.append(Pedido.cupom_de_desconto == cupom_de_desconto)
-        if criacao is not None:
-            filtros.append(Pedido.criacao == criacao)
-        if cliente is not None:
-            filtros.append(Pedido.cliente == cliente)
-        if status is not None:
-            filtros.append(Pedido.status == status)
-        if codigo is not None:
-            filtros.append(Pedido.codigo == codigo)
+        if not pedido:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Pedido não localizado!"
+            )
+        # Reverter possível uso de pontos de fidelidade
+        if pedido.pontos_fidelidade_resgatados != 0:
+            sttm = select(Cliente).where(Cliente.id == pedido.cliente)
+            cliente_db = session.exec(sttm).first()
+            if not cliente_db:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Cliente não pode cancelar pedido de outro cliente."
+                )
+            cliente_db.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
+            session.add(cliente_db)
+            session.commit()
+            session.refresh(pedido)
+
+        # Reverter possível uso de cupom de desconto
+        if pedido.cupom_de_desconto != "":
+            sttm = select(Cupom).where(Cupom.nome == pedido.cupom_de_desconto)
+            cupom_de_desconto_resgatado = session.exec(sttm).first()
+            if cupom_de_desconto_resgatado:
+                cupom_de_desconto_resgatado.quantidade_de_ultilizacao += 1
+                session.add(cupom_de_desconto_resgatado)
+                session.commit()
+                session.refresh(cupom_de_desconto_resgatado)
+
+        # Verificar condições do pedido para cancelamento
+        if pedido.status and len(pedido.codigo) != 6:
+            pedido.codigo = ""
+            pedido.status = False
+            produtos_ids = eval(pedido.produtos)
+            
+            if isinstance(produtos_ids, list):
+                produtos_query = select(Carrinho).where(Carrinho.cliente_id == pedido.cliente)
+                produtos = session.exec(produtos_query).all()
+                for produto in produtos:
+                    produto.status = False
+                    session.add(produto)
+            
+            session.add(pedido)
+            session.commit()
+            session.refresh(pedido)
+            
+            return {"message": "Pedido e produtos cancelados com sucesso"}
         
-        if filtros:
-            statement = statement.where(and_(*filtros))
-    
-        pedidos = session.exec(statement).all()
-        return pedidos
+        if pedido and pedido.codigo == "":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O pedido não pode ser cancelado, pois já foi cancelado anteriormente!"
+            )
+        
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O pedido não pode ser cancelado, pois foi pago!"
+            )

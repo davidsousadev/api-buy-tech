@@ -50,7 +50,7 @@ api-buy-tech/
 * ² Siga as instruções no arquivo [instrucoes.md](instrucoes.md)
 
 # Próximos passos
-
+- > Refatorar a confirmação de email [Urgente]
 - > Aplicar condicoes especiais aos revendedores(como descontos para compra em quantidade...)
 - > *Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)
 - > Ajustar revendedores na rotas de clientes e admins, implementar funcionalidades especiais a eles

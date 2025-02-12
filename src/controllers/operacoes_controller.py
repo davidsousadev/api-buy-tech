@@ -13,6 +13,8 @@ from src.models.operacoes_models import Operacao
 from src.models.pedidos_models import Pedido
 from src.models.carrinhos_models import Carrinho
 from src.models.admins_models import Admin
+from src.models.cupons_models import Cupom
+
 
 
 EMAIL = config('EMAIL')
@@ -183,10 +185,28 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                     status_code=status.HTTP_400_BAD_REQUEST, 
                     detail="E-mail não confirmado!"
                 )
-                
+            # Retira do saldo
+            if codigo_de_confirmacao_token["valor"] <= cliente_to_update.pontos_fidelidade:
+                cliente_to_update.pontos_fidelidade -= codigo_de_confirmacao_token["valor"]
+            else: 
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Pagamento não realizado, pontos fidelidade insuficientes!"
+                    )   
+            statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["valor"])
+            cupom = session.exec(statement).first()
+            if cupom:
+                cupom.resgatado = True
+                cupom.quantidade_de_ultilizacao -= 1
+
+                # Salvar as alterações no banco de dados
+                session.add(cupom)
+                session.commit()
+                session.refresh(cupom)
+
             statement = select(Pedido).where(Pedido.cliente == cliente.id,
                                              Pedido.status == True,
-                                             func.length(Pedido.codigo) != 6
+                                             func.length(Pedido.codigo) > 6
                                              )
             
             pedido = session.exec(statement).first()
@@ -211,8 +231,13 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                     produtos = session.exec(produtos_query).all()
 
                     for produto in produtos:
-                        print(produto.codigo, produto.id)
-                        produto.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
+                        if produto.quantidade > 1:
+                            produto.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
+                            produto.quantidade -= 1
+                        else: 
+                            raise HTTPException(
+                                status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail='Produto no pedido sem estoque!')
                         session.add(produto)
 
                 # Salvar as alterações no banco de dados
@@ -257,13 +282,12 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
 
             if operacao:
                 raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Pagamento já foi realizado anteriormente!"
-            )
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Pagamento já foi realizado anteriormente!"
+                    )
+            
             if not operacao:
-                # Retira do saldo
-                cliente_to_update.pontos_fidelidade -= codigo_de_confirmacao_token["valor"]
-                
+               
                 # Cria o operacao pagamento
                 operacao_pagamento = Operacao(
                     cliente=codigo_de_confirmacao_token["idcliente"],

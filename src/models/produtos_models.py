@@ -12,12 +12,12 @@ class BaseProduto(SQLModel):
     descricao: str
     quantidade_estoque: int
     personalizado: bool = Field(default=False)  
+    status: bool = Field(default=False)  # Se está em promoção ou não
        
 # Tabela Produto  
 class Produto(BaseProduto, table=True):
     id: int = Field(default=None, primary_key=True)
     criacao: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
-    status: bool = Field(default=False)  # Se está em promoção ou não   
-    
+       
 class UpdateProdutoRequest(BaseProduto):
-    status: bool = Field(default=False)
+    pass
