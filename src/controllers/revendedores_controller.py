@@ -68,7 +68,7 @@ def listar_revendedores(admin: Annotated[Admin, Depends(get_logged_admin)]):
   
 # Cadastrar Revendedores        
 @router.post("/cadastrar")
-def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
+def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest, ref: int | None = None):
     with Session(get_engine()) as session:
         
         # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
@@ -119,7 +119,14 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
         hash = hash_password(revendedor_data.password)
         
         codigo = gerar_codigo_confirmacao()
-        
+        if ref is not None:
+            # Verifica codigo de indicacao
+            sttm = select(Revendedor).where(Revendedor.id == ref)
+            cliente_referenciado = session.exec(sttm).first()
+            if cliente_referenciado:
+                link = ref
+        else:
+            link = 0
         revendedor = Revendedor(
                 razao_social=revendedor_data.razao_social,
                 email=revendedor_data.email, 
@@ -127,8 +134,11 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest):
                 password=hash,
                 cnpj=revendedor_data.cnpj,
                 inscricao_estadual=revendedor_data.inscricao_estadual,
+                pontos_fidelidade=10000, # Alterar posteriormente
+                clube_fidelidade=False,
                 telefone=revendedor_data.telefone,
-                status=True,
+                cod_indicacao=link,
+                status=True
                 )
         # Gera a URL de confirmação
         url = f"{URL}/emails/confirmado/index.html?codigo={codigo}"

@@ -13,6 +13,9 @@ from .controllers.pedidos_controller import router as pedidos_router
 from .controllers.carrinhos_controller import router as carrinho_router
 from .controllers.operacoes_controller import router as operacoes_router
 from .controllers.revendedores_controller import router as revendedores_router
+from .controllers.pedidos_revendedor_controller import router as pedidos_revendedor_router
+from .controllers.carrinhos_revendedor_controller import router as carrinho_revendedor_router
+from .controllers.operacoes_revendedor_controller import router as operacoes_revendedor_router
 
 from .database import init_db
 
@@ -52,6 +55,9 @@ def create_app():
     app.include_router(pedidos_router, prefix="/pedidos", tags=["Pedidos"])
     app.include_router(operacoes_router, prefix="/operacoes", tags=["Operações"])
     app.include_router(revendedores_router, prefix="/revendedores", tags=["Revendedores"])
+    app.include_router(carrinho_revendedor_router, prefix="/carrinhos_revendedor", tags=["Carrinhos Revendedor"])
+    app.include_router(pedidos_revendedor_router, prefix="/pedidos_revendedor", tags=["Pedidos Revendedor"])
+    app.include_router(operacoes_revendedor_router, prefix="/operacoes_revendedor", tags=["Operações Revendedor"])
 
     # Inicialização do banco de dados
     init_db()

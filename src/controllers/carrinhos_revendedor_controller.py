@@ -1,10 +1,10 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, and_, func
-from src.auth_utils import get_logged_admin, get_logged_cliente
+from src.auth_utils import get_logged_admin, get_logged_revendedor
 from src.database import get_engine
-from src.models.clientes_models import Cliente
-from src.models.carrinhos_models import Carrinho, BaseCarrinho, UpdateCarrinhoRequest
+from src.models.revendedores_models import Revendedor
+from src.models.carrinhos_revendedor_models import CarrinhoRevendedor, BaseCarrinhoRevendedor, UpdateCarrinhoRevendedorRequest
 from src.models.produtos_models import Produto
 from src.models.admins_models import Admin
 
@@ -15,21 +15,21 @@ router = APIRouter()
 async def options_carrinhos():
     return { "methods": ["GET", "POST", "PATCH"] }
 
-# Clientes listar carrinhos
-@router.get("", response_model=List[Carrinho])
+# revendedors listar carrinhos
+@router.get("", response_model=List[CarrinhoRevendedor])
 def listar_carrinho(
-    cliente: Annotated[Cliente, Depends(get_logged_cliente)]
+    revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]
 ):
-    if not cliente.id:
+    if not revendedor.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
     
     with Session(get_engine()) as session:
-        statement = select(Carrinho).where(Carrinho.cliente_id == Cliente.id,
-                                           Carrinho.status==False,
-                                           func.length(Carrinho.codigo) == 0
+        statement = select(CarrinhoRevendedor).where(CarrinhoRevendedor.revendedor_id == CarrinhoRevendedor.id,
+                                           CarrinhoRevendedor.status==False,
+                                           func.length(CarrinhoRevendedor.codigo) == 0
                                            )   
         itens = session.exec(statement).all()
         if itens:
@@ -41,7 +41,7 @@ def listar_carrinho(
         )
 
 # Admins listar carrinhos
-@router.get("/admin", response_model=List[Carrinho])
+@router.get("/admin", response_model=List[CarrinhoRevendedor])
 def listar_carrinhos_admin(
     admin: Annotated[Admin, Depends(get_logged_admin)],
     status: bool | None = None,
@@ -54,39 +54,39 @@ def listar_carrinhos_admin(
         )
 
     with Session(get_engine()) as session:
-        statement = select(Carrinho)
+        statement = select(CarrinhoRevendedor)
         filtros = []
         if status is not None:
-            filtros.append(Carrinho.status == status)
+            filtros.append(CarrinhoRevendedor.status == status)
         if codigo is not None:
-            filtros.append(Carrinho.codigo == codigo)
+            filtros.append(CarrinhoRevendedor.codigo == codigo)
         if filtros:
             statement = statement.where(and_(*filtros))
         itens = session.exec(statement).all()
         return itens
 
 # Cadastrar itens no carrinho
-@router.post("", response_model=BaseCarrinho)
-def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
-                            cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
-    if not cliente.id:
+@router.post("", response_model=BaseCarrinhoRevendedor)
+def cadastrar_item_carrinho(carrinho_data: BaseCarrinhoRevendedor,
+                            revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+    if not revendedor.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
 
     with Session(get_engine()) as session:
-        # Verifica se o cliente existe
-        sttm = select(Cliente).where(Cliente.id == carrinho_data.cliente_id)
-        cliente = session.exec(sttm).first()
+        # Verifica se o revendedor existe
+        sttm = select(Revendedor).where(Revendedor.id == carrinho_data.revendedor_id)
+        revendedor = session.exec(sttm).first()
 
-        if not cliente:
+        if not revendedor:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Usuário não encontrado."
             )
             
-        if carrinho_data.cliente_id != cliente.id:
+        if carrinho_data.revendedor_id != revendedor.id:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Usuário não pode adicionar itens no carrinho de outro usuário."
@@ -111,21 +111,15 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                     detail="Pedido maior que estoque!"
                 )             
             
-        sttm = select(Carrinho).where(
-        Carrinho.cliente_id == cliente.id,
-        Carrinho.produto_codigo == carrinho_data.produto_codigo
+        sttm = select(CarrinhoRevendedor).where(
+        CarrinhoRevendedor.revendedor_id == revendedor.id,
+        CarrinhoRevendedor.produto_codigo == carrinho_data.produto_codigo
     )
     carrinho = session.exec(sttm).all()
 
     if carrinho:
         for item in carrinho:
-            # Quantidade de Revendedor
-            if item.quantidade >= 20:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
-                )
-            # Produto no carrinho, mas ainda não foi comprado
+            # Produto no CarrinhoRevendedor, mas ainda não foi comprado
             if not item.status and item.quantidade != 0 and item.codigo == "":
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
@@ -139,7 +133,7 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                     detail="Item já está em pedido e não foi pago!"
                 )
 
-            # Produto foi removido do carrinho, mas ainda pode ser recuperado
+            # Produto foi removido do CarrinhoRevendedor, mas ainda pode ser recuperado
             if item.status and len(item.codigo) < 6:
                 item.status = False
                 item.quantidade = carrinho_data.quantidade
@@ -150,9 +144,9 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                 return item
 
     # Adiciona um novo item ao carrinho
-    novo_carrinho = Carrinho(
+    novo_carrinho = CarrinhoRevendedor(
         produto_codigo=carrinho_data.produto_codigo,
-        cliente_id=carrinho_data.cliente_id,
+        revendedor_id=carrinho_data.revendedor_id,
         quantidade=carrinho_data.quantidade,
         codigo="",
         status=False,
@@ -169,10 +163,10 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
 @router.patch("/{carrinho_id}")
 def atualizar_item_no_carrinho_por_id(
     carrinho_id: int,
-    carrinho_data: UpdateCarrinhoRequest,
-    cliente: Annotated[Cliente, Depends(get_logged_cliente)]
+    carrinho_data: UpdateCarrinhoRevendedorRequest,
+    revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]
 ):
-    if not cliente:
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
@@ -198,7 +192,7 @@ def atualizar_item_no_carrinho_por_id(
                     detail="Pedido maior que estoque!"
                 ) 
                 
-        sttm = select(Carrinho).where(Carrinho.id == carrinho_id)
+        sttm = select(CarrinhoRevendedor).where(CarrinhoRevendedor.id == carrinho_id)
         item_to_update = session.exec(sttm).first()
 
         if not item_to_update:
@@ -210,7 +204,7 @@ def atualizar_item_no_carrinho_por_id(
         if item_to_update.status==True and len(item_to_update.codigo) > 6:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Item não pode ser atualizado pois já esta em pedido."
+                detail="Item não pode ser atualizado pois já esta em PedidoRevendedor."
             )
             
             

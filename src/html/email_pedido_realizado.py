@@ -68,7 +68,6 @@ def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, frete, o
                 </tr>
                 {itens_html}
             </table>
-            <a href="{url}" style="display: block; background-color: #4CAF50; color: #fff; text-align: center; padding: 10px; border-radius: 5px; text-decoration: none;">Efetuar Pagamento</a>
         </div>
     </div>
 </body>

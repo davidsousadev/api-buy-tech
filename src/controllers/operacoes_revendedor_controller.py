@@ -6,12 +6,12 @@ from passlib.context import CryptContext
 
 from sqlmodel import Session, select, func
 
-from src.auth_utils import get_logged_cliente,  verifica_pagamento, get_logged_admin
+from src.auth_utils import get_logged_revendedor,  verifica_pagamento, get_logged_admin
 from src.database import get_engine
-from src.models.clientes_models import Cliente
-from src.models.operacoes_models import Operacao
-from src.models.pedidos_models import Pedido
-from src.models.carrinhos_models import Carrinho
+from src.models.revendedores_models import Revendedor
+from src.models.operacoes_revendedor_models import OperacaoRevendedor
+from src.models.pedidos_revendedor_models import PedidoRevendedor
+from src.models.carrinhos_revendedor_models import CarrinhoRevendedor
 from src.models.admins_models import Admin
 from src.models.cupons_models import Cupom
 
@@ -46,41 +46,35 @@ Pendências
 async def options_emails():
     return { "methods": ["GET"] }
 
-# Operação de retornar o saldo dos clientes
+# Operação de retornar o saldo dos revendedors
 @router.get("/saldo")
-def saldo_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
-    if not cliente:
+def saldo_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
         
     with Session(get_engine()) as session:
-        statement = select(Cliente).where(Cliente.id==cliente.id)
-        cliente_cadastrado = session.exec(statement).first()
+        statement = select(Revendedor).where(Revendedor.id==revendedor.id)
+        revendedor_cadastrado = session.exec(statement).first()
         
-        if not cliente_cadastrado:
-            raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cliente invalido!"
-        )
-        
-        if cliente_cadastrado.pontos_fidelidade:
+        if revendedor_cadastrado.pontos_fidelidade:
             return {
-                "saldo": cliente_cadastrado.pontos_fidelidade
+                "saldo": revendedor_cadastrado.pontos_fidelidade
                     }
 
-# Operação de retornar o extrato dos clientes
+# Operação de retornar o extrato dos revendedors
 @router.get("/extrato")
-def extrato_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
-    if not cliente:
+def extrato_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
         
     with Session(get_engine()) as session:
-        statement = select(Operacao).where(Operacao.cliente==cliente.id)
+        statement = select(OperacaoRevendedor).where(OperacaoRevendedor.revendedor_id==revendedor.id)
         operacoes = session.exec(statement).all()
         
         if operacoes:
@@ -91,24 +85,19 @@ def extrato_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
         if not operacoes:
             return []
 
-# Operação de retornar os creditos dos cliente       
+# Operação de retornar os creditos dos revendedor       
 @router.get("/creditos")
-def creditos_dos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
-    if not cliente:
+def creditos_dos_revendedor(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
 
     with Session(get_engine()) as session:
-        statement = select(Operacao).where(Operacao.cliente==cliente.id)
+        statement = select(OperacaoRevendedor).where(OperacaoRevendedor.revendedor_id==revendedor.id)
         operacoes = session.exec(statement).all()
-        
-        if not operacoes:
-            raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cliente invalido!"
-        )
+       
         # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)    
         creditos=[]
         for operacao in operacoes:
@@ -116,24 +105,19 @@ def creditos_dos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)
                 creditos.append(operacao)    
         return creditos
 
-# Operação de retornar os debitos dos clientes    
+# Operação de retornar os debitos dos revendedors    
 @router.get("/debitos")
-def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
-    if not cliente:
+def debitos_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
 
     with Session(get_engine()) as session:
-        statement = select(Operacao).where(Operacao.cliente==cliente.id)
+        statement = select(OperacaoRevendedor).where(OperacaoRevendedor.revendedor_id==revendedor.id)
         operacoes = session.exec(statement).all()
         
-        if not operacoes:
-            raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cliente invalido!"
-        )
         # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
         debitos=[]
         for operacao in operacoes:
@@ -143,9 +127,9 @@ def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
 
 # Operação de confirmar os pagamentos e fazer as determinadas operacoes
 @router.get("/pagamentos/{token}")
-async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     
-    if not cliente:
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
@@ -157,56 +141,40 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
     if data:
         codigo_de_confirmacao_token = {
               "loja": data[0],
-              "idcliente": int(data[1]),
+              "idrevendedor": int(data[1]),
               "valor": float(data[2]),
               "opcao_de_pagamento": bool(data[3]),
               "codigo_de_confirmacao": (data[4]),
               "cupom_de_desconto_data": (data[5]),
               "pontos_resgatados": (data[6])
         }
-        if codigo_de_confirmacao_token["idcliente"]!=cliente.id:
+        if codigo_de_confirmacao_token["idrevendedor"]!=revendedor.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Não e possivel pagar a conta de outro cliente!"
+                detail="Não e possivel pagar a conta de outro revendedor!"
             )
         with Session(get_engine()) as session:
             
-            sttm = select(Cliente).where(Cliente.id == cliente.id)
-            cliente_to_update = session.exec(sttm).first()
+            sttm = select(Revendedor).where(Revendedor.id == revendedor.id)
+            revendedor_to_update = session.exec(sttm).first()
 
-            if not cliente_to_update:
+            if not revendedor_to_update:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Usuário não encontrado."
                 )
 
-            if cliente_to_update.cod_confirmacao_email != "Confirmado":
+            if revendedor_to_update.cod_confirmacao_email != "Confirmado":
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST, 
                     detail="E-mail não confirmado!"
                 )
-            # Retira do saldo
-            if codigo_de_confirmacao_token["valor"] <= cliente_to_update.pontos_fidelidade:
-                cliente_to_update.pontos_fidelidade -= codigo_de_confirmacao_token["valor"]
-            else: 
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="Pagamento não realizado, pontos fidelidade insuficientes!"
-                    )   
-            statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["valor"])
-            cupom = session.exec(statement).first()
-            if cupom:
-                cupom.resgatado = True
-                cupom.quantidade_de_ultilizacao -= 1
+            
+            
 
-                # Salvar as alterações no banco de dados
-                session.add(cupom)
-                session.commit()
-                session.refresh(cupom)
-
-            statement = select(Pedido).where(Pedido.cliente == cliente.id,
-                                             Pedido.status == True,
-                                             func.length(Pedido.codigo) > 6
+            statement = select(PedidoRevendedor).where(PedidoRevendedor.revendedor_id == revendedor.id,
+                                             PedidoRevendedor.status == True,
+                                             func.length(PedidoRevendedor.codigo) > 6
                                              )
             
             pedido = session.exec(statement).first()
@@ -225,9 +193,9 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 produtos_ids = eval(pedido.produtos)  
 
                 if isinstance(produtos_ids, list):
-                    produtos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id,
-                                                            Carrinho.status == True,
-                                                            func.length(Carrinho.codigo) >= 6)
+                    produtos_query = select(CarrinhoRevendedor).where(CarrinhoRevendedor.revendedor_id==revendedor.id,
+                                                            CarrinhoRevendedor.status == True,
+                                                            func.length(CarrinhoRevendedor.codigo) >= 6)
                     produtos = session.exec(produtos_query).all()
 
                     for produto in produtos:
@@ -250,37 +218,37 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
             
             # Operação Referência
-            if cliente_to_update.cod_indicacao != 0:
-                sttm = select(Cliente).where(Cliente.id == cliente_to_update.cod_indicacao)
-                cliente_de_indicacao = session.exec(sttm).first()
-                if cliente_de_indicacao:
-                    cliente_de_indicacao.pontos_fidelidade += 1
-                    cliente_to_update.pontos_fidelidade += 1
+            if revendedor_to_update.cod_indicacao != 0:
+                sttm = select(Revendedor).where(Revendedor.id == revendedor_to_update.cod_indicacao)
+                revendedor_de_indicacao = session.exec(sttm).first()
+                if revendedor_de_indicacao:
+                    revendedor_de_indicacao.pontos_fidelidade += 1
+                    revendedor_to_update.pontos_fidelidade += 1
                     
-                    # Verifica se o cliente de indicação já é do clube fidelidade
-                    cliente_to_update.clube_fidelidade = True
+                    # Verifica se o revendedor de indicação já é do clube fidelidade
+                    revendedor_to_update.clube_fidelidade = True
                     # Salvar a indicacao
-                    session.add(cliente_de_indicacao)
+                    session.add(revendedor_de_indicacao)
                     session.commit()
-                    session.refresh(cliente_de_indicacao)
+                    session.refresh(revendedor_de_indicacao)
                     
                     # Cria o operacao de indicacao
-                    operacao_indicacao = Operacao(
-                    cliente=cliente_de_indicacao.id,
+                    operacao_revendedor_indicacao = OperacaoRevendedor(
+                    revendedor_id=revendedor_de_indicacao.id,
                     valor=1,
                     motivo=1,
                     tipo=1,
                     codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
                     )
                     # Salvar a indicacao
-                    session.add(operacao_indicacao)
+                    session.add(operacao_revendedor_indicacao)
                     session.commit()
-                    session.refresh(operacao_indicacao)
+                    session.refresh(operacao_revendedor_indicacao)
             
             # Operação pagamento
-            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"],       
-                                               Operacao.motivo==3,
-                                               Operacao.tipo==2)
+            statement = select(OperacaoRevendedor).where(OperacaoRevendedor.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"],       
+                                               OperacaoRevendedor.motivo==3,
+                                               OperacaoRevendedor.tipo==2)
             operacao = session.exec(statement).first()
 
             if operacao:
@@ -292,31 +260,31 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             if not operacao:
                
                 # Cria o operacao pagamento
-                operacao_pagamento = Operacao(
-                    cliente=codigo_de_confirmacao_token["idcliente"],
+                operacao_revendedor_pagamento = OperacaoRevendedor(
+                    revendedor_id=codigo_de_confirmacao_token["idrevendedor"],
                     valor=codigo_de_confirmacao_token["valor"],
                     motivo=3,
                     tipo=2,
-                    codigo=cliente.id
+                    codigo=revendedor.id
                 )
                 
                 # Salvar as alterações no banco de dados
-                session.add(operacao_pagamento)
+                session.add(operacao_revendedor_pagamento)
                 session.commit()
-                session.refresh(operacao_pagamento)
+                session.refresh(operacao_revendedor_pagamento)
             
             # Operação caskback
             cashback = int(codigo_de_confirmacao_token["valor"]/100)
             if cashback>=1:
-                cliente_to_update.pontos_fidelidade += cashback  
+                revendedor_to_update.pontos_fidelidade += cashback  
             else:
-                cliente_to_update.pontos_fidelidade += 1
+                revendedor_to_update.pontos_fidelidade += 1
                 cashback=1
             print(codigo_de_confirmacao_token["codigo_de_confirmacao"])
             # Cria o operacao de caskback
-            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], 
-                                               Operacao.motivo==2,
-                                               Operacao.tipo==1)
+            statement = select(OperacaoRevendedor).where(OperacaoRevendedor.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], 
+                                               OperacaoRevendedor.motivo==2,
+                                               OperacaoRevendedor.tipo==1)
             operacao = session.exec(statement).first()
 
             if operacao:
@@ -324,35 +292,35 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Caskback não pode ser aplicado pois ja foi aplicado anteriormente!"
             )
-            operacao_caskback = Operacao(
-            cliente=cliente_to_update.id,
+            operacao_revendedor_caskback = OperacaoRevendedor(
+            revendedor_id=revendedor_to_update.id,
             valor=cashback,
             motivo=2,
             tipo=1,
             codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
             )
             # Salvar a indicacao
-            session.add(operacao_caskback)
+            session.add(operacao_revendedor_caskback)
             session.commit()
-            session.refresh(operacao_caskback)
+            session.refresh(operacao_revendedor_caskback)
 
             return { "mensage": "Pagamento realizado com sucesso!" }
 
 # Operação de retornar as pendênçias           
 @router.get("/pendencias")
-async def pendencias_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+async def pendencias_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     
-    if not cliente:
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
         )
     with Session(get_engine()) as session:
-        # Verifica pedidos não pagos do cliente
-        pedidos = select(Pedido).where(Pedido.cliente == cliente.id)
-        pedidos_do_cliente = session.exec(pedidos).all()
+        # Verifica pedidos não pagos do revendedor
+        pedidos = select(PedidoRevendedor).where(PedidoRevendedor.revendedor_id == revendedor.id)
+        pedidos_do_revendedor = session.exec(pedidos).all()
         pendencias = []
-        for pedido in pedidos_do_cliente:
+        for pedido in pedidos_do_revendedor:
             if pedido.status==True and len(pedido.codigo) !=6:
                 pendencias.append(pedido)
         return pendencias
@@ -371,8 +339,8 @@ def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
         )
 
     with Session(get_engine()) as session:
-        statement = select(Operacao).where(Operacao.motivo==3,
-                                           Operacao.tipo==2) # Pagamentos
+        statement = select(OperacaoRevendedor).where(OperacaoRevendedor.motivo==3,
+                                           OperacaoRevendedor.tipo==2) # Pagamentos
         pagamentos = session.exec(statement).all()
 
         if pagamentos:
@@ -393,8 +361,8 @@ def listar_debitos(admin: Annotated[Admin, Depends(get_logged_admin)]):
         )
 
     with Session(get_engine()) as session:
-        statement = select(Operacao).where(Operacao.motivo==2,
-                                           Operacao.tipo==1) # Caskback
+        statement = select(OperacaoRevendedor).where(OperacaoRevendedor.motivo==2,
+                                           OperacaoRevendedor.tipo==1) # Caskback
         cashback = session.exec(statement).all()
 
         if cashback:
@@ -419,12 +387,12 @@ def listar_receitas(
         )
 
     with Session(get_engine()) as session:
-        buscarPagamentos = select(Operacao).where(Operacao.motivo==3, 
-                                           Operacao.tipo==2) # Pagamentos
+        buscarPagamentos = select(OperacaoRevendedor).where(OperacaoRevendedor.motivo==3, 
+                                           OperacaoRevendedor.tipo==2) # Pagamentos
         pagamentos = session.exec(buscarPagamentos).all()
 
-        buscarCashback = select(Operacao).where(Operacao.motivo==2,
-                                           Operacao.tipo==1) # Caskback
+        buscarCashback = select(OperacaoRevendedor).where(OperacaoRevendedor.motivo==2,
+                                           OperacaoRevendedor.tipo==1) # Caskback
         caskback = session.exec(buscarCashback).all()
         creditos = 0
         debitos = 0

@@ -18,7 +18,10 @@ class SignUpRevendedorRequest(BaseRevendedor):
 # Retorno dos dados
 class RevendedorData(BaseRevendedor):
   status: bool
-  cnpj: str      
+  cnpj: str   
+  cod_indicacao: int   
+  pontos_fidelidade: int
+  clube_fidelidade: bool
   inscricao_estadual: int 
   telefone: str       
 
@@ -33,6 +36,9 @@ class Revendedor(IncludeRevendedor, table=True):
   id: int = Field(default=None, primary_key=True)
   password: str
   criacao_de_conta: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
+  pontos_fidelidade: int
+  clube_fidelidade: bool
+  cod_indicacao: int
   cod_confirmacao_email: str
   status: bool
 
@@ -54,7 +60,10 @@ class RevendedorResponse(BaseModel):
     id: int
     razao_social: str  
     email: str
+    cod_indicacao: int
     cod_confirmacao_email: str
+    pontos_fidelidade: float
+    clube_fidelidade: bool
     criacao_de_conta: str
     status: bool
 
