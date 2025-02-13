@@ -209,6 +209,111 @@ def logar_admins(signin_data: SignInAdminRequest):
 def autenticar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
   return admin
 
+# Atualiza alguns dados dos administradores
+@router.patch("/atualizar")
+def atualizar_adminis(
+    admin_data: UpdateAdminRequest,
+    admin: Annotated[Admin, Depends(get_logged_admin)],
+):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+    
+    with Session(get_engine()) as session:
+        # Buscar o administrador a ser atualizado
+        sttm = select(Admin).where(Admin.id == admin.id)
+        admin_to_update = session.exec(sttm).first()
+
+        if not admin_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Administrador não encontrado."
+            )
+        
+        if admin_to_update.cod_confirmacao_email != "Confirmado":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="E-mail não confirmado!"
+            )
+        
+        # Atualizar os campos fornecidos
+        if admin_data.nome and admin_to_update.nome != admin_data.nome:
+            admin_to_update.nome = admin_data.nome
+        if admin_data.email and admin_to_update.email != admin_data.email:
+                # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.cod_confirmacao_email == admin_data.email,
+                    Revendedor.cod_confirmacao_email == admin_data.email,
+                    Cliente.cod_confirmacao_email == admin_data.email
+                )
+            )
+            registro_existente = session.exec(sttm).first()
+    
+            if registro_existente:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
+                )
+    
+            # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.email == admin_data.email,
+                    Revendedor.email == admin_data.email,
+                    Cliente.email == admin_data.email
+                )
+            )
+            email_existente = session.exec(sttm).first()
+    
+            if email_existente:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='E-mail já cadastrado anteriormente!'
+                )
+
+            # Atualizar o e-mail (mantendo o atual como "não confirmado")
+            admin_to_update.cod_confirmacao_email = admin_to_update.email
+            admin_to_update.email = admin_data.email
+        if admin_data.cpf and admin_to_update.cpf != admin_data.cpf:
+            
+            # Verifica se já existe um admin ou cliente com o mesmo CPF
+            sttm = select(Admin, Cliente).where(
+                or_(
+                    Admin.cpf == admin_data.cpf,
+                    Cliente.cpf == admin_data.cpf
+                )
+            )
+            cpf_existente = session.exec(sttm).first()
+
+            if cpf_existente:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='CPF já cadastrado anteriormente!'
+                )
+
+            admin_to_update.cpf = admin_data.cpf
+        if admin_data.data_nascimento and admin_to_update.data_nascimento != admin_data.data_nascimento:
+            admin_to_update.data_nascimento = admin_data.data_nascimento
+        if admin_data.telefone and admin_to_update.telefone != admin_data.telefone:
+            admin_to_update.telefone = admin_data.telefone
+        if admin_data.cep and admin_to_update.cep != admin_data.cep:
+            admin_to_update.cep = admin_data.cep
+        if admin_data.complemento and admin_to_update.complemento != admin_data.complemento:
+            admin_to_update.complemento = admin_data.complemento 
+        if admin_data.password and admin_to_update.password != hash_password(admin_data.password):
+            admin_to_update.password = hash_password(admin_data.password)
+
+        # Salvar as alterações no banco de dados
+        session.add(admin_to_update)
+        session.commit()
+        session.refresh(admin_to_update)
+
+        return {"message": "Administrador atualizado com sucesso!", "Administrador": admin_to_update}
+
+
 # Atualiza alguns dados dos administradores por id
 @router.patch("/atualizar/{admin_id}")
 def atualizar_adminis_por_id(

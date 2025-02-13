@@ -59,16 +59,16 @@ def saldo_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)])
         statement = select(Cliente).where(Cliente.id==cliente.id)
         cliente_cadastrado = session.exec(statement).first()
         
+        if cliente_cadastrado.pontos_fidelidade:
+            return {
+                "saldo": cliente_cadastrado.pontos_fidelidade
+                    }
+        
         if not cliente_cadastrado:
             raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Cliente invalido!"
         )
-        
-        if cliente_cadastrado.pontos_fidelidade:
-            return {
-                "saldo": cliente_cadastrado.pontos_fidelidade
-                    }
 
 # Operação de retornar o extrato dos clientes
 @router.get("/extrato")
@@ -88,6 +88,7 @@ def extrato_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
             for operacao in operacoes:
                 registros.append(operacao)
             return registros
+        
         if not operacoes:
             return []
 
@@ -104,21 +105,21 @@ def creditos_dos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)
         statement = select(Operacao).where(Operacao.cliente==cliente.id)
         operacoes = session.exec(statement).all()
         
-        if not operacoes:
-            raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cliente invalido!"
-        )
-        # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)    
-        creditos=[]
-        for operacao in operacoes:
-            if (operacao.motivo==1 and operacao.tipo==1) or (operacao.motivo==2 and operacao.tipo==1):
-                creditos.append(operacao)    
-        return creditos
+        if operacoes:
+            
+            # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)    
+            creditos=[]
+            for operacao in operacoes:
+                if (operacao.motivo==1 and operacao.tipo==1) or (operacao.motivo==2 and operacao.tipo==1):
+                    creditos.append(operacao)    
+            return creditos
+        else:
+            return []
 
 # Operação de retornar os debitos dos clientes    
 @router.get("/debitos")
 def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
+
     if not cliente:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -129,17 +130,17 @@ def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
         statement = select(Operacao).where(Operacao.cliente==cliente.id)
         operacoes = session.exec(statement).all()
         
+        if operacoes:
+            
+            # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
+            debitos=[]
+            for operacao in operacoes:
+                if operacao.motivo==3 and operacao.tipo==2:
+                    debitos.append(operacao)   
+            return debitos
+    
         if not operacoes:
-            raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cliente invalido!"
-        )
-        # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
-        debitos=[]
-        for operacao in operacoes:
-            if operacao.motivo==3 and operacao.tipo==2:
-                debitos.append(operacao)   
-        return debitos
+            return []
 
 # Operação de confirmar os pagamentos e fazer as determinadas operacoes
 @router.get("/pagamentos/{token}")
@@ -299,7 +300,14 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                     tipo=2,
                     codigo=cliente.id
                 )
-                
+                if codigo_de_confirmacao_token["valor"] >= 5000:
+                    # Verifica se o cliente de indicação já é do clube fidelidade
+                    cliente_to_update.clube_fidelidade = True
+                    # Salvar a indicacao
+                    session.add(cliente_de_indicacao)
+                    session.commit()
+                    session.refresh(cliente_de_indicacao)
+
                 # Salvar as alterações no banco de dados
                 session.add(operacao_pagamento)
                 session.commit()

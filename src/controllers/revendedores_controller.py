@@ -223,11 +223,11 @@ def logar_revendedores(signin_data: SignInRevendedorRequest):
 def autenticar_revendedores(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
   return revendedor
 
-# Atualizar revendedores por id
-@router.patch("/atualizar/{revendedor_id}")
-def atualizar_revendedor( revendedor_id: int, revendedor_data: UpdateRevendedorRequest, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)],
+# Atualizar revendedores
+@router.patch("/atualizar")
+def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)],
 ):
-    if revendedor_id != revendedor.id:
+    if not revendedor:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"
@@ -236,6 +236,139 @@ def atualizar_revendedor( revendedor_id: int, revendedor_data: UpdateRevendedorR
     with Session(get_engine()) as session:
         # Buscar o revendedor a ser atualizado
         sttm = select(Revendedor).where(Revendedor.id == revendedor.id)
+        revendedor_to_update = session.exec(sttm).first()
+
+        if not revendedor_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Revendedor não encontrado."
+            )
+        
+        if revendedor_to_update.cod_confirmacao_email != "Confirmado":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="E-mail não confirmado!"
+            )
+        
+        # Atualizar os campos fornecidos
+        if revendedor_data.razao_social and revendedor_to_update.razao_social != revendedor_data.razao_social:
+            revendedor_to_update.razao_social = revendedor_data.razao_social
+
+        if revendedor_data.email and revendedor_to_update.email != revendedor_data.email:
+            # Verifica se já existe um admin, revendedor ou cliente com o código de confirmação de e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.cod_confirmacao_email == revendedor_data.email,
+                    Revendedor.cod_confirmacao_email == revendedor_data.email,
+                    Cliente.cod_confirmacao_email == revendedor_data.email
+                )
+            )
+            registro_existente = session.exec(sttm).first()
+
+            if registro_existente:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
+                )
+
+            # Verifica se já existe um admin, revendedor ou cliente com o mesmo e-mail
+            sttm = select(Admin, Revendedor, Cliente).where(
+                or_(
+                    Admin.email == revendedor_data.email,
+                    Revendedor.email == revendedor_data.email,
+                    Cliente.email == revendedor_data.email
+                )
+            )
+            email_existente = session.exec(sttm).first()
+
+            if email_existente:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail='E-mail já cadastrado anteriormente!'
+                )
+
+            # Atualizar o e-mail (mantendo o atual como "não confirmado")
+            revendedor_to_update.cod_confirmacao_email = revendedor_to_update.email
+            revendedor_to_update.email = revendedor_data.email
+        if revendedor_data.cnpj and int(revendedor_to_update.cnpj) != int(revendedor_data.cnpj):
+            
+            # Verificar duplicidade de CNPJ em Revendedor
+            revendedor_cnpj = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
+            if session.exec(revendedor_cnpj).first():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"CNPJ já cadastrado por outro Revendedorx!{revendedor_to_update.cnpj} != {revendedor_data.cnpj}"
+                )
+            revendedor_to_update.cnpj = revendedor_data.cnpj
+
+        if revendedor_data.inscricao_estadual and revendedor_to_update.inscricao_estadual != revendedor_data.inscricao_estadual:
+            
+            # Verificar duplicidade de CNPJ em Revendedor
+            revendedor_inscricao_estadual = select(Revendedor).where(Revendedor.inscricao_estadual == revendedor_data.inscricao_estadual)
+            revendedor_duplicicade = session.exec(revendedor_inscricao_estadual).first()
+            
+            if revendedor_duplicicade and revendedor_duplicicade.cnpj != revendedor_data.cnpj:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Incrição Estadual já cadastrada por outro Revendedor!"
+                )
+            revendedor_to_update.inscricao_estadual = revendedor_data.inscricao_estadual
+            
+        if revendedor_data.telefone and revendedor_to_update.telefone != revendedor_data.telefone:
+            revendedor_to_update.telefone = revendedor_data.telefone
+ 
+        if revendedor_data.password and revendedor_to_update.password != hash_password(revendedor_data.password):
+            revendedor_to_update.password = hash_password(revendedor_data.password)
+
+        # Salvar as alterações no banco de dados
+        session.add(revendedor_to_update)
+        session.commit()
+        session.refresh(revendedor_to_update)
+
+        return {"message": "Revendedor atualizado com sucesso!", "Revendedor": revendedor_to_update}
+
+
+
+# Desativar revendedores por id
+@router.patch("/desativar/{revendedor_id}")
+def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
+    
+    if revendedor_id != revendedor.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+
+    with Session(get_engine()) as session:
+        sttm = select(Revendedor).where(Revendedor.id == revendedor_id)
+        revendedor_to_update = session.exec(sttm).first()
+
+        if not revendedor_to_update:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Revendedor não encontrado."
+            )
+
+        revendedor_to_update.status = False
+        session.add(revendedor_to_update)
+        session.commit()
+        session.refresh(revendedor_to_update)
+
+        return {"message": "Revendedor desativado com sucesso!"}
+
+# Atualizar revendedores por id
+@router.patch("/admin/atualizar/{revendedor_id}")
+def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: UpdateRevendedorRequest, admin: Annotated[Admin, Depends(get_logged_revendedor)],
+):
+    if admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Acesso negado!"
+        )
+    
+    with Session(get_engine()) as session:
+        # Buscar o revendedor a ser atualizado
+        sttm = select(Revendedor).where(Revendedor.id == revendedor_id)
         revendedor_to_update = session.exec(sttm).first()
 
         if not revendedor_to_update:
@@ -328,38 +461,12 @@ def atualizar_revendedor( revendedor_id: int, revendedor_data: UpdateRevendedorR
 
         return {"message": "Revendedor atualizado com sucesso!", "Revendedor": revendedor_to_update}
 
-# Desativar revendedores por id
-@router.patch("/desativar/{revendedor_id}")
-def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
-    
-    if revendedor_id != revendedor.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acesso negado!"
-        )
-
-    with Session(get_engine()) as session:
-        sttm = select(Revendedor).where(Revendedor.id == revendedor_id)
-        revendedor_to_update = session.exec(sttm).first()
-
-        if not revendedor_to_update:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Revendedor não encontrado."
-            )
-
-        revendedor_to_update.status = False
-        session.add(revendedor_to_update)
-        session.commit()
-        session.refresh(revendedor_to_update)
-
-        return {"message": "Revendedor desativado com sucesso!"}
 
 # Adiministradores Atualiza status revendedores por id para desativado ou ativado
 @router.patch("/admin/atualizar_status/{revendedor_id}")
 def atualizar_status_admin_revendedor_por_id(revendedor_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     
-    if not admin.admin:
+    if not admin.admin or not admin.status:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado!"

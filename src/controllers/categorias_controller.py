@@ -101,7 +101,7 @@ def atualizar_categorias_por_id(
         if categoria_to_update.nome == categoria_data.nome:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Não houve alteração de nome de categoria: {categoria_data.nome}"
+                detail=f"Não houve alteração: {categoria_data.nome} de nome de categoria"
             )
             
         # Verificar se já existe outra categoria com o mesmo nome

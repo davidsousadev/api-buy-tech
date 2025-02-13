@@ -186,10 +186,10 @@ def atualizar_cupons_por_id(
         
         # Verificação de cupons resgatados
         if cupom_to_update.resgatado == True:
-            if cupom_data.nome != cupom_to_update.nome:
+            if cupom_data.nome != cupom_to_update.nome and cupom_data.valor != cupom_to_update.valor and cupom_data.tipo != cupom_to_update.tipo:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Cupom já resgatado não pode ter nome atualizado."
+                    detail="Cupom já resgatado não pode ter dados atualizado."
                 )
 
         # Se o cupom não foi resgatado, permite atualização do nome

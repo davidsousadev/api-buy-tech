@@ -97,7 +97,7 @@ def email_confirmado(codigo: str):
     
 # Recuperar email
 @router.get('/recuperar_email', status_code=status.HTTP_200_OK)
-def recuperar_email(email: str | None = None, cpf: int | None = None):
+def recuperar_email(email: str | None = None, cpf: str | None = None, cnpj: str | None = None):
     with Session(get_engine()) as session:
         cliente_to_update = None
         admin_to_update = None
@@ -114,9 +114,15 @@ def recuperar_email(email: str | None = None, cpf: int | None = None):
             admin_to_update = session.exec(sttm_admin).first()
             if admin_to_update and len(admin_to_update.cod_confirmacao_email) > 6:
                 admin_to_update.email = admin_to_update.cod_confirmacao_email
+
+            # Verificar em Revendedor
+            sttm_revendedor = select(Revendedor).where(Revendedor.cod_confirmacao_email == email)
+            revendedor_to_update = session.exec(sttm_revendedor).first()
+            if revendedor_to_update and len(revendedor_to_update.cod_confirmacao_email) > 6:
+                revendedor_to_update.email = revendedor_to_update.cod_confirmacao_email
             
             # Caso nenhum dos dois tenha correspondência
-            if not cliente_to_update and not admin_to_update:
+            if not cliente_to_update and not admin_to_update and not revendedor_to_update:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="E-mail não está em recuperação!"
@@ -141,7 +147,19 @@ def recuperar_email(email: str | None = None, cpf: int | None = None):
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="CPF inválido!"
                 )
-
+        if cnpj:
+            # Verificar em Revendedor
+            sttm_revendedor = select(Revendedor).where(Revendedor.cnpj == cnpj)
+            revendedor_to_update = session.exec(sttm_revendedor).first()
+            if revendedor_to_update and len(revendedor_to_update.cod_confirmacao_email) > 6:
+                revendedor_to_update.email = revendedor_to_update.cod_confirmacao_email
+            
+            # Caso nenhum dos dois tenha correspondência
+            if not revendedor_to_update:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="CNPJ inválido!"
+                )
         # Atualizar e salvar no banco de dados
         if cliente_to_update:
             cliente_to_update.cod_confirmacao_email = "Confirmado"
@@ -154,9 +172,14 @@ def recuperar_email(email: str | None = None, cpf: int | None = None):
             session.add(admin_to_update)
             session.commit()
             session.refresh(admin_to_update)
+        if revendedor_to_update:
+            revendedor_to_update.cod_confirmacao_email = "Confirmado"
+            session.add(revendedor_to_update)
+            session.commit()
+            session.refresh(revendedor_to_update)
 
         # Retornar o sucesso
-        if cliente_to_update or admin_to_update:
+        if cliente_to_update or admin_to_update or revendedor_to_update:
             return {"email": True}
         else:
             raise HTTPException(
@@ -194,10 +217,20 @@ def recuperar_senha(email: str | None = None):
                 destinatario = cliente_to_update.email
                 entidade = cliente_to_update
             else:
-                raise HTTPException(
+                # Verificar se é um revendedor
+                sttm = select(Revendedor).where(Revendedor.email == email)
+                revendedor_to_update = session.exec(sttm).first()
+
+                if revendedor_to_update and revendedor_to_update.cod_confirmacao_email == "Confirmado":
+                    password = gerar_codigo_confirmacao()
+                    corpo_de_confirmacao = template_redefinir_senha(revendedor_to_update.nome, password)
+                    destinatario = revendedor_to_update.email
+                    entidade = revendedor_to_update
+                else:
+                    raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="E-mail inválido!"
-                )
+                    )
 
         # Configurar o e-mail
         email_data = Email(

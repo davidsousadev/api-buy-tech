@@ -509,7 +509,7 @@ def atualizar_clientes_por_id(
 # Adiministradores atualiza o status do usuarios por id para desativado ou ativado     
 @router.patch("/admin/atualizar_status/{cliente_id}")
 def atualizar_status_clientes_admin_por_id(cliente_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
-    if not admin.admin:
+    if not admin.admin or not admin.status:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Acesso negado! Apenas administradores podem desativar ou ativar usuários."
