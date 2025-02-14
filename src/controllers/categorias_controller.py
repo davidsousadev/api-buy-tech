@@ -35,16 +35,21 @@ def listar_categorias(
         return categorias
     
     
-# Listar categorias por id
-@router.get("/{categoria_id}", response_model=Categoria)
-def listar_categorias_por_id(
-    categoria_id: int
-):
+# Listar categoria por ID
+@router.get("/{categoria_id}")
+def listar_categorias_por_id(categoria_id: int):
     with Session(get_engine()) as session:
-        statement = select(Categoria)
-        statement = statement.where(Categoria.id == categoria_id)        
-        categorias = session.exec(statement).first()
-        return categorias
+        statement = select(Categoria).where(Categoria.id == categoria_id)
+        categoria = session.exec(statement).first()
+
+        # Verifica se a categoria foi encontrada
+        if not categoria:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Categoria não encontrada."
+            )
+        
+        return categoria
 
 # Cadastrar categorias
 @router.post("", response_model=BaseCategoria)
