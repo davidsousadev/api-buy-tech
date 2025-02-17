@@ -150,6 +150,11 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                 return item
 
     # Adiciona um novo item ao carrinho
+    if carrinho_data.quantidade >= 20:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
+                )
     novo_carrinho = Carrinho(
         produto_codigo=carrinho_data.produto_codigo,
         cliente_id=carrinho_data.cliente_id,
@@ -197,7 +202,11 @@ def atualizar_item_no_carrinho_por_id(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Pedido maior que estoque!"
                 ) 
-                
+        if carrinho_data.quantidade >= 20:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
+                )        
         sttm = select(Carrinho).where(Carrinho.id == carrinho_id)
         item_to_update = session.exec(sttm).first()
 
