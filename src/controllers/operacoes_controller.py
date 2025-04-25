@@ -194,7 +194,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Pagamento não realizado, pontos fidelidade insuficientes!"
                     )   
-            statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["valor"])
+            statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["cupom_de_desconto_data"])
             cupom = session.exec(statement).first()
             if cupom:
                 cupom.resgatado = True
@@ -320,7 +320,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             else:
                 cliente_to_update.pontos_fidelidade += 1
                 cashback=1
-            print(codigo_de_confirmacao_token["codigo_de_confirmacao"])
+            #print(codigo_de_confirmacao_token["codigo_de_confirmacao"])
             # Cria o operacao de caskback
             statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], 
                                                Operacao.motivo==2,
