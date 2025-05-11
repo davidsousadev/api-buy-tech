@@ -2,8 +2,7 @@ from sqlmodel import create_engine, SQLModel
 from decouple import config
 
 def get_engine():
-    engines = []
-
+    
     # PostgreSQL
     try:
         user = config('DB_USERNAME')
@@ -14,12 +13,11 @@ def get_engine():
         postgres_url = f'postgresql://{user}:{password}@{host}:{port}/{db_name}?sslmode=require'
         engine = create_engine(postgres_url)
         engine.connect().close()
-        print("Conectado ao PostgreSQL com sucesso.")
+        # print("Conectado ao PostgreSQL com sucesso.")
         return engine
     except Exception as e:
         print(f"Falha ao conectar ao PostgreSQL: {e}")
-
-    """
+"""
     # MySQL
     try:
         user = config('MYSQL_USERNAME', default=user)
@@ -39,9 +37,9 @@ def get_engine():
     # SQLite
     sqlite_url = 'sqlite:///buy-tech.db'
     engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
-    print("Conectado ao SQLite local.")
+    # print("Conectado ao SQLite local.")
     return engine
-    """
+"""
 
 def init_db():
     engine = get_engine()
