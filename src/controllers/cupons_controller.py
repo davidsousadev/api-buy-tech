@@ -98,7 +98,7 @@ def listar_cupons(
         if cupom:
             return cupom
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Cupom não localizado."
         )
 

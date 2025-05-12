@@ -36,7 +36,7 @@ def listar_carrinho(
             return itens
         else:
             raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Carrinho vazio!"
         )
 

@@ -36,7 +36,7 @@ def listar_carrinho(
             return itens
         else:
             raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Carrinho vazio!"
         )
 
@@ -66,7 +66,7 @@ def listar_carrinhos_admin(
         return itens
 
 # Cadastrar itens no carrinho
-@router.post("", response_model=BaseCarrinho)
+@router.post("", response_model=BaseCarrinho, status_code=status.HTTP_201_CREATED)
 def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                             cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente.id:
@@ -82,13 +82,13 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
 
         if not cliente:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não encontrado."
             )
             
         if carrinho_data.cliente_id != cliente.id:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail="Usuário não pode adicionar itens no carrinho de outro usuário."
             )
             
@@ -97,78 +97,78 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
         produto = session.exec(sttm).first()
         if not produto:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="Produto não encontrado!"
             )
-        if produto.quantidade_estoque==0:
+        if produto.quantidade_estoque == 0:
             raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Produto sem estoque!"
-                ) 
-        if produto.quantidade_estoque<carrinho_data.quantidade:
+                status_code=status.HTTP_200_OK,
+                detail="Produto sem estoque!"
+            )
+        if produto.quantidade_estoque < carrinho_data.quantidade:
             raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Pedido maior que estoque!"
-                )             
-            
+                status_code=status.HTTP_200_OK,
+                detail="Pedido maior que estoque!"
+            )             
+                
+        # Verifica se o item já existe no carrinho
         sttm = select(Carrinho).where(
-        Carrinho.cliente_id == cliente.id,
-        Carrinho.produto_codigo == carrinho_data.produto_codigo
-    )
-    carrinho = session.exec(sttm).all()
+            Carrinho.cliente_id == cliente.id,
+            Carrinho.produto_codigo == carrinho_data.produto_codigo
+        )
+        carrinho = session.exec(sttm).all()
 
-    if carrinho:
-        for item in carrinho:
-            # Quantidade de Revendedor
-            if item.quantidade >= 20:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
-                )
-            # Produto no carrinho, mas ainda não foi comprado
-            if not item.status and item.quantidade != 0 and item.codigo == "":
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Item já está no carrinho!"
-                )
+        if carrinho:
+            for item in carrinho:
+                # Quantidade de Revendedor
+                if item.quantidade >= 20:
+                    raise HTTPException(
+                        status_code=status.HTTP_200_OK,
+                        detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
+                    )
+                # Produto no carrinho, mas ainda não foi comprado
+                if not item.status and item.quantidade != 0 and item.codigo == "":
+                    raise HTTPException(
+                        status_code=status.HTTP_200_OK,
+                        detail="Item já está no carrinho!"
+                    )
+                # Produto está em pedido e não foi pago
+                if item.status and item.quantidade != 0 and len(item.codigo) > 6:
+                    raise HTTPException(
+                        status_code=status.HTTP_200_OK,
+                        detail="Item já está em pedido e não foi pago!"
+                    )
+                # Produto foi removido do carrinho, mas ainda pode ser recuperado
+                if item.status and len(item.codigo) < 6:
+                    item.status = False
+                    item.quantidade = carrinho_data.quantidade
+                    item.preco = produto.preco
+                    session.add(item)
+                    session.commit()
+                    session.refresh(item)
+                    return item
 
-            # Produto está em pedido e não foi pago
-            if item.status and item.quantidade != 0 and len(item.codigo) > 6:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Item já está em pedido e não foi pago!"
-                )
+        # Adiciona um novo item ao carrinho
+        if carrinho_data.quantidade >= 20:
+            raise HTTPException(
+                status_code=status.HTTP_200_OK,
+                detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
+            )
+        
+        novo_carrinho = Carrinho(
+            produto_codigo=carrinho_data.produto_codigo,
+            cliente_id=carrinho_data.cliente_id,
+            quantidade=carrinho_data.quantidade,
+            codigo="",
+            status=False,
+            preco=produto.preco
+        )
 
-            # Produto foi removido do carrinho, mas ainda pode ser recuperado
-            if item.status and len(item.codigo) < 6:
-                item.status = False
-                item.quantidade = carrinho_data.quantidade
-                item.preco = produto.preco
-                session.add(item)
-                session.commit()
-                session.refresh(item)
-                return item
-
-    # Adiciona um novo item ao carrinho
-    if carrinho_data.quantidade >= 20:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
-                )
-    novo_carrinho = Carrinho(
-        produto_codigo=carrinho_data.produto_codigo,
-        cliente_id=carrinho_data.cliente_id,
-        quantidade=carrinho_data.quantidade,
-        codigo="",
-        status=False,
-        preco=produto.preco
-    )
-
-    session.add(novo_carrinho)
-    session.commit()
-    session.refresh(novo_carrinho)
-    
-    return novo_carrinho
+        session.add(novo_carrinho)
+        session.commit()
+        session.refresh(novo_carrinho)
+        
+        return novo_carrinho
 
 # Atualizar itens no carrinho
 @router.patch("/{carrinho_id}")
@@ -189,22 +189,22 @@ def atualizar_item_no_carrinho_por_id(
         produto = session.exec(sttm).first()
         if not produto:
             raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_200_OK,
                     detail="Produto não encontrado!"
                 )
         if produto.quantidade_estoque==0:
             raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_200_OK,
                     detail="Produto sem estoque!"
                 )
         if produto.quantidade_estoque<carrinho_data.quantidade:
             raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_200_OK,
                     detail="Pedido maior que estoque!"
                 ) 
         if carrinho_data.quantidade >= 20:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_200_OK,
                     detail="Cliente não pode adicionar mais de 20 itens no carrinho!"
                 )        
         sttm = select(Carrinho).where(Carrinho.id == carrinho_id)
@@ -212,13 +212,13 @@ def atualizar_item_no_carrinho_por_id(
 
         if not item_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="Item não encontrado."
             )
             
         if item_to_update.status==True and len(item_to_update.codigo) > 6:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="Item não pode ser atualizado pois já esta em pedido."
             )
             
@@ -231,7 +231,7 @@ def atualizar_item_no_carrinho_por_id(
             session.refresh(item_to_update)
             
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="Item removido do carrinho!"
             )
         

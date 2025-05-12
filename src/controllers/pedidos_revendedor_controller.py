@@ -144,7 +144,7 @@ def listar_pedidos_por_id(
             return pedido
         else:
             raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Pedido invalido!"
         )
 
