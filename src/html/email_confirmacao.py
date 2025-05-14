@@ -23,7 +23,7 @@ def template_confirmacao(nome, url):
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }}
         .email-header {{
-            background-color: #4CAF50;
+            background-color: #004AAD;
             color: #ffffff;
             padding: 20px;
             text-align: center;
@@ -33,7 +33,7 @@ def template_confirmacao(nome, url):
         }}
         .btn {{
             display: inline-block;
-            background-color: #4CAF50;
+            background-color: #15B0F8;
             color: #ffffff;
             text-decoration: none;
             padding: 10px 20px;
@@ -42,7 +42,7 @@ def template_confirmacao(nome, url):
             font-size: 16px;
         }}
         .btn:hover {{
-            background-color: #45a049;
+            background-color: #3a83a5;
         }}
     </style>
 </head>

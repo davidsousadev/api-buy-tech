@@ -49,7 +49,8 @@ api-buy-tech/
 * ¹ Crie um arquivo .env e insira as variaveis conforme o arquivo .envexample
 * ² Siga as instruções no arquivo [instrucoes.md](instrucoes.md)
 
-# Próximos passos
+### Próximos passos
+- > Ajustar todos os retornos para no front não aparecer a conecção com a api
 - > Refatorar a confirmação de email [Urgente]
 - > Aplicar condicoes especiais aos revendedores(como descontos para compra em quantidade...)
 - > *Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)

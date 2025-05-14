@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from datetime import date, datetime
+from datetime import datetime
 import datetime
 from sqlmodel import SQLModel, Field
 

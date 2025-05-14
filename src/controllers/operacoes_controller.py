@@ -320,7 +320,6 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             else:
                 cliente_to_update.pontos_fidelidade += 1
                 cashback=1
-            #print(codigo_de_confirmacao_token["codigo_de_confirmacao"])
             # Cria o operacao de caskback
             statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], 
                                                Operacao.motivo==2,
