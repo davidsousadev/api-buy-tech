@@ -38,3 +38,14 @@
 ```sh
     fastapi dev src/main.py
 ```
+
+##### Em um único comando
+```sh
+    python3 -m venv venv-buy &&
+    source venv-buy/bin/activate &&
+    pip3 install --upgrade pip &&
+    pip3 install -r requirements.txt &&
+    fastapi dev src/main.py &&
+    cp .envexample .env &&
+    openssl rand -hex 32
+```
