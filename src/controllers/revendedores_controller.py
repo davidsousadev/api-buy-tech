@@ -327,8 +327,6 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
 
         return {"message": "Revendedor atualizado com sucesso!", "Revendedor": revendedor_to_update}
 
-
-
 # Desativar revendedores por id
 @router.patch("/desativar/{revendedor_id}")
 def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
@@ -460,7 +458,6 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
         session.refresh(revendedor_to_update)
 
         return {"message": "Revendedor atualizado com sucesso!", "Revendedor": revendedor_to_update}
-
 
 # Adiministradores Atualiza status revendedores por id para desativado ou ativado
 @router.patch("/admin/atualizar_status/{revendedor_id}")

@@ -408,11 +408,9 @@ def listar_debitos(admin: Annotated[Admin, Depends(get_logged_admin)]):
                   return cashback  
         if not cashback:
             raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                    status_code=status.HTTP_200_OK,
                     detail="Nenhum pagamento Realizado"
                 )
-
-
 
 # Listar as receitas do sistema e cashback       
 @router.get("/vendas/cashback/admin")

@@ -2,7 +2,15 @@ from sqlmodel import create_engine, SQLModel
 from decouple import config
 
 def get_engine():
-    
+    """    
+    # SQLite
+    sqlite_url = 'sqlite:///buy-tech.db'
+    engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+    # print("Conectado ao SQLite local.")
+    return engine
+
+
+"""    
     # PostgreSQL
     try:
         user = config('DB_USERNAME')
@@ -17,6 +25,10 @@ def get_engine():
         return engine
     except Exception as e:
         print(f"Falha ao conectar ao PostgreSQL: {e}")
+
+
+        
+
 """
     # MySQL
     try:
@@ -32,14 +44,7 @@ def get_engine():
         return engine
     except Exception as e:
         print(f"Falha ao conectar ao MySQL: {e}")
-    
-
-    # SQLite
-    sqlite_url = 'sqlite:///buy-tech.db'
-    engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
-    # print("Conectado ao SQLite local.")
-    return engine
-"""
+"""    
 
 def init_db():
     engine = get_engine()

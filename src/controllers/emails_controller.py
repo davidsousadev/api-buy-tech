@@ -1,5 +1,4 @@
 from fastapi import APIRouter, status, HTTPException
-from fastapi.responses import RedirectResponse
 from decouple import config
 from davidsousa import enviar_email
 from src.models.emails_models import Email, SuporteEmail, Equipamento
@@ -30,7 +29,7 @@ def gerar_codigo_confirmacao(tamanho=6):
 # Lista os verbos disponiveis para esse controller
 @router.options("", status_code=status.HTTP_200_OK)
 async def options_emails():
-    return { "methods": ["GET"] }
+    return { "methods": ["GET", "POST"] }
 
 # Verifica se o email foi confirmado    
 @router.get('/confirmado', status_code=status.HTTP_200_OK)
@@ -45,14 +44,14 @@ def email_confirmado(codigo: str):
 
         if not cliente_to_update and not admin_to_update and not revendedor_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="Codigo de recuperação invalido!"
             )
         if cliente_to_update:
 
             if cliente_to_update.cod_confirmacao_email=="Confirmado":
                 raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="E-mail já confirmado."
                 )  
             if len(cliente_to_update.cod_confirmacao_email)>6:
@@ -66,7 +65,7 @@ def email_confirmado(codigo: str):
         if admin_to_update:
             if admin_to_update.cod_confirmacao_email=="Confirmado":
                 raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="E-mail já confirmado."
                 )  
             if len(admin_to_update.cod_confirmacao_email)>6:
@@ -80,7 +79,7 @@ def email_confirmado(codigo: str):
         if revendedor_to_update:
             if revendedor_to_update.cod_confirmacao_email=="Confirmado":
                 raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_200_OK,
                 detail="E-mail já confirmado."
                 )  
             if len(revendedor_to_update.cod_confirmacao_email)>6:

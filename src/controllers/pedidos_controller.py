@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, and_, func
 from src.auth_utils import get_logged_admin, get_logged_cliente
 from src.database import get_engine
-from src.models.pedidos_models import BasePedido, Pedido, UpdatePedidoRequest
+from src.models.pedidos_models import BasePedido, Pedido
 from src.auth_utils import get_logged_cliente, get_logged_admin, hash_password
 from src.models.carrinhos_models import Carrinho
 from src.models.produtos_models import Produto

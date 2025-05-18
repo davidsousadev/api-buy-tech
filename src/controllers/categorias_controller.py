@@ -33,8 +33,7 @@ def listar_categorias(
         
         categorias = session.exec(statement).all()
         return categorias
-    
-    
+      
 # Listar categoria por ID
 @router.get("/{categoria_id}")
 def listar_categorias_por_id(categoria_id: int):
@@ -105,7 +104,7 @@ def atualizar_categorias_por_id(
             
         if categoria_to_update.nome == categoria_data.nome:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_200_OK,
                 detail=f"Não houve alteração: {categoria_data.nome} de nome de categoria"
             )
             

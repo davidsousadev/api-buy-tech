@@ -58,9 +58,9 @@ async def verificar_email(email: str):
         revendedor = session.exec(statement_revendedor).first()
         
         if cliente or admin or revendedor:
-            raise HTTPException(status_code=400, detail="Email já cadastrado.")
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="Email já cadastrado.")
 
-    return {"e-mail": True}
+    return {"detail": True}
 
 # Endpoint para verificar duplicidade de CPF
 @router.get("/verificar-cpf")
@@ -75,9 +75,9 @@ async def verificar_cpf(cpf: int):
         admin = session.exec(statement_admin).first()
         
         if cliente or admin:
-            raise HTTPException(status_code=400, detail="CPF já cadastrado.")
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="CPF já cadastrado.")
 
-    return {"cpf": True}
+    return {"detail": True}
 
 # Listar clientes
 @router.get("/admin", response_model=list[ClienteResponse])
@@ -237,7 +237,7 @@ def logar_clientes(signin_data: SignInClienteRequest):
     cliente = session.exec(sttm).first()
     
     if not cliente: # não encontrou usuário
-      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+      raise HTTPException(status_code=status.HTTP_200_OK, 
         detail='Email invalido!')
     
     # encontrou, então verificar a senha
@@ -247,17 +247,17 @@ def logar_clientes(signin_data: SignInClienteRequest):
 
     if not is_correct:
       raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, 
+        status_code=status.HTTP_200_OK, 
         detail='Senha incorrenta!')
       
     if cliente.cod_confirmacao_email !="Confirmado":
       raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, 
+        status_code=status.HTTP_200_OK, 
         detail='E-mail não confirmado')
     
     if cliente.status == False:
       raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, 
+        status_code=status.HTTP_200_OK, 
         detail='Conta de cliente desativada!') 
     
     

@@ -13,8 +13,6 @@ from src.models.operacoes_revendedor_models import OperacaoRevendedor
 from src.models.pedidos_revendedor_models import PedidoRevendedor
 from src.models.carrinhos_revendedor_models import CarrinhoRevendedor
 from src.models.admins_models import Admin
-from src.models.cupons_models import Cupom
-
 
 
 EMAIL = config('EMAIL')
@@ -372,8 +370,6 @@ def listar_debitos(admin: Annotated[Admin, Depends(get_logged_admin)]):
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Nenhum pagamento Realizado"
                 )
-
-
 
 # Listar as receitas do sistema e cashback       
 @router.get("/vendas/cashback/admin")

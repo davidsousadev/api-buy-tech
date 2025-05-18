@@ -1,15 +1,13 @@
 from typing import Annotated, List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select
-from src.auth_utils import get_logged_cliente, get_logged_admin
+from src.auth_utils import get_logged_admin
 from src.database import get_engine
 from src.models.admins_models import Admin
-from src.models.clientes_models import Cliente
 from src.models.cupons_models import BaseCupom, Cupom
 
 router = APIRouter()
 
-from typing import Optional
 from fastapi import Query
 
 # Lista os verbos disponiveis para esse controller
@@ -101,7 +99,6 @@ def listar_cupons(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Cupom não localizado."
         )
-
 
 # Administradores Cadastrar cupons
 @router.post("", response_model=BaseCupom)

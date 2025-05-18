@@ -25,7 +25,8 @@ from decouple import config
 
 EMAIL = config('EMAIL')
 KEY_EMAIL = config('KEY_EMAIL')
-URL= config('URL')
+URL = config('URL')
+URL_FRONT = config('URL_FRONT')
 
 router = APIRouter()
 
@@ -126,7 +127,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
                 admin=True
                 )
         # Gera a URL de confirmação
-        url = f"{URL}/emails/confirmado/index.html?codigo={codigo}"
+        url = f"{URL_FRONT}/emails/confirmado/index.html?codigo={codigo}"
         corpo_de_confirmacao = template_confirmacao(admin.nome, url)
 
         # Envia o e-mail de confirmação
@@ -171,17 +172,17 @@ def logar_admins(signin_data: SignInAdminRequest):
     admin = session.exec(sttm).first()
     
     if not admin: # Não encontrou Administrador
-      raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+      raise HTTPException(status_code=status.HTTP_200_OK, 
         detail='Email incorreto!')
     
     if admin.cod_confirmacao_email !="Confirmado":
       raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, 
+        status_code=status.HTTP_200_OK, 
         detail='E-mail não confirmado!')
     
     if admin.status == False:
       raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, 
+        status_code=status.HTTP_200_OK, 
         detail='Conta de administrador desativada!') 
     
     # encontrou, então verificar a senha
@@ -191,7 +192,7 @@ def logar_admins(signin_data: SignInAdminRequest):
 
     if not is_correct:
       raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST, 
+        status_code=status.HTTP_200_OK, 
         detail='Usuário e/ou senha incorrento(S)')
     
     # Tá tudo OK pode gerar um Token JWT e devolver
@@ -312,7 +313,6 @@ def atualizar_adminis(
         session.refresh(admin_to_update)
 
         return {"message": "Administrador atualizado com sucesso!", "Administrador": admin_to_update}
-
 
 # Atualiza alguns dados dos administradores por id
 @router.patch("/atualizar/{admin_id}")
