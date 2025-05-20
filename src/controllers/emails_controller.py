@@ -123,7 +123,7 @@ def recuperar_email(email: str | None = None, cpf: str | None = None, cnpj: str 
             # Caso nenhum dos dois tenha correspondência
             if not cliente_to_update and not admin_to_update and not revendedor_to_update:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="E-mail não está em recuperação!"
                 )
 
@@ -143,7 +143,7 @@ def recuperar_email(email: str | None = None, cpf: str | None = None, cnpj: str 
             # Caso nenhum dos dois tenha correspondência
             if not cliente_to_update and not admin_to_update:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="CPF inválido!"
                 )
         if cnpj:
@@ -156,7 +156,7 @@ def recuperar_email(email: str | None = None, cpf: str | None = None, cnpj: str 
             # Caso nenhum dos dois tenha correspondência
             if not revendedor_to_update:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="CNPJ inválido!"
                 )
         # Atualizar e salvar no banco de dados
@@ -182,7 +182,7 @@ def recuperar_email(email: str | None = None, cpf: str | None = None, cnpj: str 
             return {"email": True}
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Nenhum registro foi atualizado!"
             )
  
@@ -192,7 +192,7 @@ def recuperar_senha(email: str | None = None):
     with Session(get_engine()) as session:
         if not email:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="E-mail é obrigatório!"
             )
 
@@ -227,7 +227,7 @@ def recuperar_senha(email: str | None = None):
                     entidade = revendedor_to_update
                 else:
                     raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="E-mail inválido!"
                     )
 
@@ -311,11 +311,11 @@ def suporte_email(cliente_id: int, enviar_email_suporte: SuporteEmail):
                     ) 
                 else:
                     raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Confirme o e-mail!"
                     )
         raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Realize o cadastro!"
                     )
     
@@ -432,10 +432,10 @@ def pedido_personalizado(cliente_id: int, equipamento: Equipamento):
                     ) 
                 else:
                     raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Confirme o e-mail!"
                     )
         raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Realize o cadastro!"
                     )

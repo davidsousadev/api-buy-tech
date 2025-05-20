@@ -83,7 +83,7 @@ def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
         
@@ -133,7 +133,7 @@ def atualizar_produto_por_id(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
         
@@ -143,7 +143,7 @@ def atualizar_produto_por_id(
 
         if not produto_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Produto não encontrado."
             )
         

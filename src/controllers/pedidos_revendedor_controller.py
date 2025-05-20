@@ -53,7 +53,7 @@ def listar_pedidos_admin(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -98,7 +98,7 @@ def listar_pedidos(
 ):
     if not revendedor.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -133,7 +133,7 @@ def listar_pedidos_por_id(
 ):
     if not revendedor.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -144,7 +144,7 @@ def listar_pedidos_por_id(
             return pedido
         else:
             raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Pedido invalido!"
         )
 
@@ -156,7 +156,7 @@ def cadastrar_PedidoRevendedor(
 ):
     if not revendedor.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -167,7 +167,7 @@ def cadastrar_PedidoRevendedor(
         revendedor = session.exec(sttm).first()
         if not revendedor:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Revendedor não encontrado."
             )
 
@@ -178,7 +178,7 @@ def cadastrar_PedidoRevendedor(
         for pedido in pedidos_do_revendedor:
             if PedidoRevendedor.status is True and len(PedidoRevendedor.codigo) != 6:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="revendedor tem pedidos não pagos."
                 )
             if not PedidoRevendedor.status and not PedidoRevendedor.codigo:
@@ -193,7 +193,7 @@ def cadastrar_PedidoRevendedor(
         itens = session.exec(statement).all()
         if not itens:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="O carrinho está vazio."
             )
         
@@ -208,12 +208,12 @@ def cadastrar_PedidoRevendedor(
                 produto = session.exec(produto_sttm).first()
                 if not produto:
                     raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
+                        status_code=status.HTTP_204_NO_CONTENT,
                         detail=f"Produto com código {item.produto_codigo} não encontrado."
                     )
                 if produto.quantidade_estoque < item.quantidade:
                     raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
+                        status_code=status.HTTP_204_NO_CONTENT,
                         detail=f"Quantidade solicitada para o produto '{produto.nome}' excede o estoque disponível!"
                     )
                 # Realiza a multiplicação com ponto flutuante
@@ -227,7 +227,7 @@ def cadastrar_PedidoRevendedor(
 
         if valor_items == 0:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Os itens do carrinho já estão em PedidoRevendedor."
             )
 
@@ -349,7 +349,7 @@ def cancelar_pedido_por_id(
 ):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -360,7 +360,7 @@ def cancelar_pedido_por_id(
 
         if not pedido:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Pedido não localizado!"
             )
         # Reverter possível uso de pontos de fidelidade
@@ -369,7 +369,7 @@ def cancelar_pedido_por_id(
             revendedor_db = session.exec(sttm).first()
             if not revendedor_db:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="revendedor não pode cancelar pedido de outro revendedor."
                 )
             revendedor_db.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
@@ -398,13 +398,13 @@ def cancelar_pedido_por_id(
         
         if pedido and pedido.codigo == "":
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="O pedido não pode ser cancelado, pois já foi cancelado anteriormente!"
             )
         
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="O pedido não pode ser cancelado, pois foi pago!"
             )
 
@@ -416,7 +416,7 @@ def cancelar_pedido_por_id_admin(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -427,7 +427,7 @@ def cancelar_pedido_por_id_admin(
 
         if not pedido:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Pedido não localizado!"
             )
         # Reverter possível uso de pontos de fidelidade
@@ -436,7 +436,7 @@ def cancelar_pedido_por_id_admin(
             revendedor_db = session.exec(sttm).first()
             if not revendedor_db:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="revendedor não pode cancelar pedido de outro revendedor."
                 )
             revendedor_db.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
@@ -475,12 +475,12 @@ def cancelar_pedido_por_id_admin(
         
         if pedido and pedido.codigo == "":
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="O pedido não pode ser cancelado, pois já foi cancelado anteriormente!"
             )
         
         else:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="O pedido não pode ser cancelado, pois foi pago!"
             )

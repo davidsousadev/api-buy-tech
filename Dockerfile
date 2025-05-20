@@ -16,5 +16,8 @@ COPY . .
 # 6. Expor a porta do container
 EXPOSE 8000
 
-# 7. Rodar a aplicação
+# 7. Realizar testes
+CMD ["pytest", "--disable-warnings", "-q"]
+
+# 8. Rodar a aplicação
 CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]

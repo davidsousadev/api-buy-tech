@@ -22,7 +22,7 @@ def listar_carrinho(
 ):
     if not cliente.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
     
@@ -49,7 +49,7 @@ def listar_carrinhos_admin(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -71,7 +71,7 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
                             cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -88,7 +88,7 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinho,
             
         if carrinho_data.cliente_id != cliente.id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Usuário não pode adicionar itens no carrinho de outro usuário."
             )
             
@@ -179,7 +179,7 @@ def atualizar_item_no_carrinho_por_id(
 ):
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
         

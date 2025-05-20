@@ -47,7 +47,7 @@ def listar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
     
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado! Apenas administradores podem listar admins."
         )
 
@@ -72,7 +72,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
 
         if registro_existente:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
             )
 
@@ -86,7 +86,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
 
         if email_existente:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail='E-mail já cadastrado anteriormente!'
             )
 
@@ -99,12 +99,12 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
 
         if cpf_existente:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail='CPF já cadastrado anteriormente!'
             )      
         if admin_data.password != admin_data.confirm_password:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail='Senhas não coincidem!'
             )
 
@@ -218,7 +218,7 @@ def atualizar_adminis(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
     
@@ -229,13 +229,13 @@ def atualizar_adminis(
 
         if not admin_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Administrador não encontrado."
             )
         
         if admin_to_update.cod_confirmacao_email != "Confirmado":
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="E-mail não confirmado!"
             )
         
@@ -255,7 +255,7 @@ def atualizar_adminis(
     
             if registro_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
     
@@ -271,7 +271,7 @@ def atualizar_adminis(
     
             if email_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail='E-mail já cadastrado anteriormente!'
                 )
 
@@ -291,7 +291,7 @@ def atualizar_adminis(
 
             if cpf_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail='CPF já cadastrado anteriormente!'
                 )
 
@@ -323,7 +323,7 @@ def atualizar_adminis_por_id(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado! Apenas administradores podem atualizar admins."
         )
     
@@ -334,13 +334,13 @@ def atualizar_adminis_por_id(
 
         if not admin_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Administrador não encontrado."
             )
         
         if admin_to_update.cod_confirmacao_email != "Confirmado":
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="E-mail não confirmado!"
             )
         
@@ -360,7 +360,7 @@ def atualizar_adminis_por_id(
     
             if registro_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
     
@@ -376,7 +376,7 @@ def atualizar_adminis_por_id(
     
             if email_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail='E-mail já cadastrado anteriormente!'
                 )
 
@@ -396,7 +396,7 @@ def atualizar_adminis_por_id(
 
             if cpf_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail='CPF já cadastrado anteriormente!'
                 )
 
@@ -425,7 +425,7 @@ def atualizar_status_admins_por_id(admin_id: int, admin: Annotated[Admin, Depend
     
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado! Apenas administradores podem desativar administradores."
         )
 
@@ -435,7 +435,7 @@ def atualizar_status_admins_por_id(admin_id: int, admin: Annotated[Admin, Depend
 
         if not admin_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Administrador não encontrado."
             )
 

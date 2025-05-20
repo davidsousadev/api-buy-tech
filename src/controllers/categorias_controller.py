@@ -44,7 +44,7 @@ def listar_categorias_por_id(categoria_id: int):
         # Verifica se a categoria foi encontrada
         if not categoria:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Categoria não encontrada."
             )
         
@@ -56,7 +56,7 @@ def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, 
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
         
@@ -87,7 +87,7 @@ def atualizar_categorias_por_id(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -98,7 +98,7 @@ def atualizar_categorias_por_id(
 
         if not categoria_to_update:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Categoria não encontrada."
             )
             
@@ -117,7 +117,7 @@ def atualizar_categorias_por_id(
 
         if categoria_com_mesmo_nome:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Já existe outra categoria com o mesmo nome."
             )
 

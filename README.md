@@ -6,41 +6,57 @@
 api-buy-tech/
 ├── src/
 │   │
-│   ├── controllers/                   # Logica das Rotas
-│   │   ├── admins_controller.py       # Rotas dos Admin
-│   │   ├── carrinho_controller.py     # Rotas dos Carrinho de Compras
-│   │   ├── categorias_controller.py   # Rotas das Categorias
-│   │   ├── clientes_controller.py     # Rotas dos Clientes
-│   │   ├── cupons_controller.py       # Rotas dos Cupons
-│   │   ├── emails_controller.py       # Rotas dos E-mails
-│   │   ├── operacoes_controller.py    # Rotas das Operações
-│   │   ├── pedidos_controller.py      # Rotas das Pedidos
-│   │   ├── produtos_controller.py     # Rotas dos Produtos
-│   │   └── revendedores_controller.py # Rotas dos Revendedores
-│   │
-│   ├── html/                          # Templates de E-mail HTML
-│   │   ├── email_confirmacao.py       # E-mail de confirmação de conta
-│   │   ├── email_pedido_realizado.py  # E-mail de pedido solicitado
-│   │   └── email_redefinir_senha.py   # E-mail de redefinição de senha
-│   │
-│   ├── models/                        # Modelos de dados
-│   │   ├── admins_models.py           # Dados dos Admin
-│   │   ├── carrinho_models.py         # Dados dos Carrinhos de Compras
-│   │   ├── categorias_models.py       # Dados das Categorias
-│   │   ├── clientes_models.py         # Dados dos Clientes
-│   │   ├── cupons_models.py           # Dados dos Cupons
-│   │   ├── emails_models.py           # Dados dos E-mails
-│   │   ├── operacoes_models.py        # Dados dos Operações
-│   │   ├── pedidos_models.py          # Dados das Pedidos
-│   │   ├── produtos_models.py         # Dados dos Produtos
-│   │   └── revendedores_models.py     # Dados dos Revendedores
-│   │
+│   ├── controllers/                                            # Logica das Rotas
+│   │   |
+│   │   ├── admins_controller.py                                # Rotas dos Admin
+│   │   ├── carrinhos_controller.py                             # Rotas dos Carrinho de Compras
+│   │   ├── carrinhos_revendedor_controller.py                  # Rotas dos Carrinho de Compras Revendedor
+│   │   ├── categorias_controller.py                            # Rotas das Categorias
+│   │   ├── clientes_controller.py                              # Rotas dos Clientes
+│   │   ├── cupons_controller.py                                # Rotas dos Cupons
+│   │   ├── emails_controller.py                                # Rotas dos E-mails
+│   │   ├── operacoes_controller.py                             # Rotas das Operações
+│   │   ├── operacoes_revendedor_controller.py                  # Rotas das Operações Revendedor
+│   │   ├── pedidos_controller.py                               # Rotas das Pedidos
+│   │   ├── pedidos_revendedor_controller.py                    # Rotas das Pedidos Revendedor
+│   │   ├── produtos_controller.py                              # Rotas dos Produtos
+│   │   └── revendedores_controller.py                          # Rotas dos Revendedores
+│   │                           
+│   ├── html/                                                   # Templates de E-mail HTML
+│   │   |
+│   │   ├── email_confirmacao.py                                # E-mail de confirmação de conta
+│   │   ├── email_pedido_realizado.py                           # E-mail de pedido solicitado
+│   │   └── email_redefinir_senha.py                            # E-mail de redefinição de senha
+│   │                           
+│   ├── models/                                                 # Modelos de dados
+│   │   |
+│   │   ├── admins_models.py                                    # Dados dos Admin
+│   │   ├── carrinhos_models.py                                 # Dados dos Carrinhos de Compras
+│   │   ├── carrinhos_revendedor_models.py                      # Dados dos Carrinhos de Compras
+│   │   ├── categorias_models.py                                # Dados das Categorias
+│   │   ├── clientes_models.py                                  # Dados dos Clientes
+│   │   ├── cupons_models.py                                    # Dados dos Cupons
+│   │   ├── emails_models.py                                    # Dados dos E-mails
+│   │   ├── operacoes_models.py                                 # Dados dos Operações
+│   │   ├── operacoes_revendedor_models.py                      # Dados dos Operações
+│   │   ├── pedidos_models.py                                   # Dados das Pedidos
+│   │   ├── pedidos_revendedor_models.py                        # Dados das Pedidos
+│   │   ├── produtos_models.py                                  # Dados dos Produtos
+│   │   └── revendedores_models.py                              # Dados dos Revendedores
+│   │                           
+│   ├── models/                                                 # Modelos de dados
+│   │   |
+│   │   ├── _test_cadastro_admin.py                             # Sendo implementado teste de cadastro de admin
+│   │   ├── README.md                                           # Documentação dos testes
+│   │   └── test__main.py                                       # Teste principal
+|   |
 │   ├── auth_utils.py     # Arquivo de autenticação de usuários / admins / revendedores
 │   ├── database.py       # Arquivo de configuração de banco de dados 
 │   └── main.py           # Arquivo principal de inicialização
 │
 ├── .env                  # Variaveis de ambiente¹
 ├── .envexample           # Exemplo das Variaveis de ambiente
+├── Dockerfile            # Receita Docker
 ├── instrucoes.md         # Arquivo com as instruções de instalação
 ├── README.md             # Project documentation
 └── requirements.txt      # Arquivo com as blibiotecas ultilizadas no projeto²
@@ -51,10 +67,11 @@ api-buy-tech/
 
 ## Próximos passos
 
-* Ajustar todos os retornos para no front não aparecer a conecção com a api
-* Refatorar a confirmação de email [Urgente]
+* Aplicar testes de carga e range em todas os end-points
+* Implementar paginação na nas listagens e rolagem infinita
+  
 * Aplicar condicoes especiais aos revendedores(como descontos para compra em quantidade...)
-* *Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)
+* Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)
 * Ajustar revendedores na rotas de clientes e admins, implementar funcionalidades especiais a eles
 * Calcular o frete e aplicar clube fidelidade para quem comprou 5 vezes no mes
 * Implementar os testes urgentemente
@@ -82,4 +99,6 @@ api-buy-tech/
 * Carrinhos Revendedor: Listar Carrinho, Cadastrar Item Carrinho, Listar Carrinhos Admin e Atualizar Item No Carrinho Por Id
 * Pedidos Revendedor: Listar Pedidos, Cadastrar Pedido Revendedor, Listar Pedidos Admin, Listar Pedidos Por Id, Cancelar Pedido Por Id e Cancelar Pedido Por Id Admin
 * Operações Revendedor: Saldo Dos Revendedores, Extrato Dos Revendedores, Créditos Dos Revendedores, Débitos Dos Revendedores, Confirmar Pagamentos, Pendências Dos Revendedores, Listar Receitas, Listar Débitos e Listar Receitas
-  
+
+* Refatorar a confirmação de email [Urgente]
+* Ajustar todos os retornos para no front não aparecer a conexão com a api / remoção de erros HTTP_4*

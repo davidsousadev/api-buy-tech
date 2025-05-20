@@ -49,7 +49,7 @@ async def options_emails():
 def saldo_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
         
@@ -67,7 +67,7 @@ def saldo_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_r
 def extrato_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
         
@@ -88,7 +88,7 @@ def extrato_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged
 def creditos_dos_revendedor(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -108,7 +108,7 @@ def creditos_dos_revendedor(revendedor: Annotated[Revendedor, Depends(get_logged
 def debitos_dos_revendedors(revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
 
@@ -129,7 +129,7 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
     
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
     
@@ -148,7 +148,7 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
         }
         if codigo_de_confirmacao_token["idrevendedor"]!=revendedor.id:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Não e possivel pagar a conta de outro revendedor!"
             )
         with Session(get_engine()) as session:
@@ -158,13 +158,13 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
 
             if not revendedor_to_update:
                 raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Usuário não encontrado."
                 )
 
             if revendedor_to_update.cod_confirmacao_email != "Confirmado":
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, 
+                    status_code=status.HTTP_204_NO_CONTENT, 
                     detail="E-mail não confirmado!"
                 )
             
@@ -183,7 +183,7 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
                 is_correct = pwd_context.verify(codigo_de_confirmacao_token["codigo_de_confirmacao"], pedido.codigo)
                 if not is_correct:
                   raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST, 
+                    status_code=status.HTTP_204_NO_CONTENT, 
                     detail='Codigo de confirmação invalido!')
 
                 pedido.codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
@@ -202,7 +202,7 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
                             produto.quantidade -= 1
                         else: 
                             raise HTTPException(
-                                status_code=status.HTTP_400_BAD_REQUEST, 
+                                status_code=status.HTTP_204_NO_CONTENT, 
                                 detail='Produto no pedido sem estoque!')
                         session.add(produto)
 
@@ -251,7 +251,7 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
 
             if operacao:
                 raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Pagamento já foi realizado anteriormente!"
                     )
             
@@ -287,7 +287,7 @@ async def confirmar_pagamentos(token: str, revendedor: Annotated[Revendedor, Dep
 
             if operacao:
                 raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_204_NO_CONTENT,
                 detail="Caskback não pode ser aplicado pois ja foi aplicado anteriormente!"
             )
             operacao_revendedor_caskback = OperacaoRevendedor(
@@ -310,7 +310,7 @@ async def pendencias_dos_revendedors(revendedor: Annotated[Revendedor, Depends(g
     
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado!"
         )
     with Session(get_engine()) as session:
@@ -332,7 +332,7 @@ async def pendencias_dos_revendedors(revendedor: Annotated[Revendedor, Depends(g
 def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado! Apenas administradores podem listar receitas."
         )
 
@@ -345,7 +345,7 @@ def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
                   return pagamentos  
         if not pagamentos:
             raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Nenhum pagamento Realizado"
                 )
 
@@ -354,7 +354,7 @@ def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
 def listar_debitos(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado! Apenas administradores podem listar receitas."
         )
 
@@ -367,7 +367,7 @@ def listar_debitos(admin: Annotated[Admin, Depends(get_logged_admin)]):
                   return cashback  
         if not cashback:
             raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                    status_code=status.HTTP_204_NO_CONTENT,
                     detail="Nenhum pagamento Realizado"
                 )
 
@@ -378,7 +378,7 @@ def listar_receitas(
     ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_204_NO_CONTENT,
             detail="Acesso negado! Apenas administradores podem listar receitas."
         )
 
