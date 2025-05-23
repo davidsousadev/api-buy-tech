@@ -64,7 +64,7 @@ async def verificar_email(email: str):
 
 # Endpoint para verificar duplicidade de CPF
 @router.get("/verificar-cpf")
-async def verificar_cpf(cpf: int):
+async def verificar_cpf(cpf: str):
     with Session(get_engine()) as session:
         # Verifica duplicidade em clientes
         statement = select(Cliente).where(Cliente.cpf == cpf)
