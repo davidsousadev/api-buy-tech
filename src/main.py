@@ -2,9 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
-from mangum import Mangum
-
-# Importação de todos os controladores
+# Importação de todos controladores
 from .controllers.emails_controller import router as email_router
 from .controllers.clientes_controller import router as clientes_router
 from .controllers.admins_controller import router as admins_router
@@ -23,6 +21,7 @@ from .database import init_db
 
 
 def create_app():
+    
     # Inicializa a aplicação
     app = FastAPI(
         title="API Buy Tech",
@@ -33,18 +32,18 @@ def create_app():
     # Configuração de CORS
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=["*"],  # ! Restringir em produção
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
-    # Middleware TrustedHost
+    
+    # Middleware TrustedHost sem parâmetros incorretos
     app.add_middleware(
-        TrustedHostMiddleware,
-        allowed_hosts=["*"], 
-    )
-
+        TrustedHostMiddleware, 
+        allowed_hosts=["*"],  # ! Restringir em produção
+    )  
+    
     # Registro das rotas
     app.include_router(admins_router, prefix="/admins", tags=["Admins"])
     app.include_router(clientes_router, prefix="/clientes", tags=["Clientes"])
@@ -68,12 +67,10 @@ def create_app():
 
 app = create_app()
 
-handler = Mangum(app)
-
-# Execução local
 if __name__ == "__main__":
     import uvicorn
     import os
-
+    
+    # Porta dinâmica para compatibilidade com serviços do RENDER
     port = int(os.getenv("PORT", 8000))
     uvicorn.run("src.main:app", host="0.0.0.0", port=port, reload=True)
