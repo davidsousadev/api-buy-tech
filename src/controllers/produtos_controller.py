@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, desc
 from src.auth_utils import get_logged_admin
 from src.database import get_engine
+from sqlalchemy import func
 from src.models.admins_models import Admin
 from src.models.categorias_models import Categoria
 from src.models.produtos_models import BaseProduto, Produto, UpdateProdutoRequest
@@ -14,7 +15,6 @@ router = APIRouter()
 async def options_produtos():
     return { "methods": ["GET", "POST", "PATCH"] }
 
-# Lista produtos com diversos filtros opcionais
 @router.get("", response_model=List[Produto])
 def listar_produtos(
     id: int | None = None,
@@ -32,40 +32,79 @@ def listar_produtos(
     descricao: str | None = None
 ):
     with Session(get_engine()) as session:
-        statement = select(Produto)
+        statement_base = select(Produto)
 
-        # Aplicar filtros dinamicamente
+        # Aplica filtros exceto nome
         if id is not None:
-            statement = statement.where(Produto.id == id)
-        if nome:
-            statement = statement.where(Produto.nome.contains(nome))
+            statement_base = statement_base.where(Produto.id == id)
         if preco_min is not None:
-            statement = statement.where(Produto.preco >= preco_min)
+            statement_base = statement_base.where(Produto.preco >= preco_min)
         if preco_max is not None:
-            statement = statement.where(Produto.preco <= preco_max)
-        if categoria:
-            statement = statement.where(Produto.categoria == categoria)
+            statement_base = statement_base.where(Produto.preco <= preco_max)
+        if categoria is not None:
+            statement_base = statement_base.where(Produto.categoria == categoria)
         if personalizado is not None:
-            statement = statement.where(Produto.personalizado == personalizado)
+            statement_base = statement_base.where(Produto.personalizado == personalizado)
         if status is not None:
-            statement = statement.where(Produto.status == status)
+            statement_base = statement_base.where(Produto.status == status)
         if quantidade_min is not None:
-            statement = statement.where(Produto.quantidade_estoque >= quantidade_min)
+            statement_base = statement_base.where(Produto.quantidade_estoque >= quantidade_min)
         if quantidade_max is not None:
-            statement = statement.where(Produto.quantidade_estoque <= quantidade_max)
+            statement_base = statement_base.where(Produto.quantidade_estoque <= quantidade_max)
         if criacao_inicio:
-            statement = statement.where(Produto.criacao >= criacao_inicio)
+            statement_base = statement_base.where(Produto.criacao >= criacao_inicio)
         if criacao_fim:
-            statement = statement.where(Produto.criacao <= criacao_fim)
+            statement_base = statement_base.where(Produto.criacao <= criacao_fim)
         if marca:
-            statement = statement.where(Produto.marca.contains(marca))
+            statement_base = statement_base.where(Produto.marca.contains(marca))
         if descricao:
-            statement = statement.where(Produto.descricao.contains(descricao))
+            statement_base = statement_base.where(Produto.descricao.contains(descricao))
 
-        # Ordenar produtos com status=True primeiro
-        statement = statement.order_by(desc(Produto.status))
+        statement_base = statement_base.order_by(desc(Produto.status))
 
-        produtos = session.exec(statement).all()
+        produtos = []
+
+        if nome:
+            tentativas = []
+
+            if len(nome) == 1:
+                tentativas.append(nome)
+            elif len(nome) >= 3:
+                tentativas.append(nome)     
+                tentativas.append(nome[:3]) 
+                tentativas.append(nome[-3:])
+                tentativas.append(nome[:2]) 
+                tentativas.append(nome[:1]) 
+            else:
+                for t in range(len(nome), 0, -1):
+                    tentativas.append(nome[:t])
+            produtos = []
+            for fragmento in tentativas:
+                if len(fragmento) == 1:
+                    statement = statement_base.where(Produto.nome.ilike(f"{fragmento}%"))
+                else:
+                    statement = statement_base.where(Produto.nome.ilike(f"%{fragmento}%"))
+                produtos = session.exec(statement).all()
+                if produtos:
+                    break
+
+            if not produtos:
+                primeira_letra = nome[0]
+                statement = statement_base.where(Produto.nome.ilike(f"{primeira_letra}%"))
+                produtos = session.exec(statement).all()
+
+            if not produtos:
+                primeiro_produto = session.exec(
+                    select(Produto.nome).order_by(Produto.nome.asc()).limit(1)
+                ).first()
+                if primeiro_produto:
+                    primeira_letra_produto = primeiro_produto[0][0]  # primeira letra do nome do produto
+                    statement = statement_base.where(Produto.nome.ilike(f"{primeira_letra_produto}%"))
+                    produtos = session.exec(statement).all()
+
+        else:
+            produtos = session.exec(statement_base).all()
+
         return produtos
 
 # Busca um produto específico pelo ID
