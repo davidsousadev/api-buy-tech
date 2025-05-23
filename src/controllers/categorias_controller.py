@@ -66,7 +66,7 @@ def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, 
         categoria = session.exec(sttm).first()
     
     if categoria:
-      raise HTTPException(status_code=400, detail='Categoria já existe com esse nome!')
+      raise HTTPException(status_code=status.HTTP_200_OK, detail='Categoria já existe com esse nome!')
     
     categoria = Categoria(
         nome=categoria_data.nome,
@@ -77,6 +77,40 @@ def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, 
         session.commit()
         session.refresh(categoria)
         return categoria
+
+# Cadastro em massa
+@router.post("/massa", response_model=List[Categoria])
+def cadastrar_categorias_em_massa(
+    categorias_data: List[Categoria],
+    admin: Admin = Depends(get_logged_admin)
+):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT,
+            detail="Acesso negado!"
+        )
+
+    categorias_criadas = []
+
+    with Session(get_engine()) as session:
+        for categoria_data in categorias_data:
+            # Verifica se já existe
+            sttm = select(Categoria).where(Categoria.nome == categoria_data.nome)
+            categoria_existente = session.exec(sttm).first()
+
+            if categoria_existente:
+                continue  # Pula se já existe
+
+            nova_categoria = Categoria(
+                nome=categoria_data.nome,
+            )
+            session.add(nova_categoria)
+            session.commit()
+            session.refresh(nova_categoria)
+
+            categorias_criadas.append(nova_categoria)
+
+    return categorias_criadas
 
 # Atualizar categorias  
 @router.patch("/{categoria_id}")

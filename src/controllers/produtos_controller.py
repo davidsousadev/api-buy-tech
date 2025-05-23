@@ -74,7 +74,7 @@ def buscar_produto(id: int):
     with Session(get_engine()) as session:
         produto = session.get(Produto, id)
         if not produto:
-            raise HTTPException(status_code=404, detail="Produto não encontrado")
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="Produto não encontrado")
         return produto
 
 # Cadastra produtos
@@ -94,18 +94,18 @@ def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends
         produto = session.exec(sttm).first()
     
         if produto:
-            raise HTTPException(status_code=400, detail='Produto já existe com esse nome!')
+            raise HTTPException(status_code=status.HTTP_200_OK, detail='Produto já existe com esse nome!')
         if produto_data.preco<=0:
-            raise HTTPException(status_code=400, detail='Preço invalido!')
+            raise HTTPException(status_code=status.HTTP_200_OK, detail='Preço invalido!')
         if produto_data.quantidade_estoque<=0:
-            raise HTTPException(status_code=400, detail='Quantidade invalida!')
+            raise HTTPException(status_code=status.HTTP_200_OK, detail='Quantidade invalida!')
         
         # Verifica categoria
         sttm = select(Categoria).where(Categoria.id == produto_data.categoria)
         categoria = session.exec(sttm).first()
         
         if not categoria:
-            raise HTTPException(status_code=400, detail='Categoria não existe!')
+            raise HTTPException(status_code=status.HTTP_200_OK, detail='Categoria não existe!')
         
     produto = Produto(
         nome=produto_data.nome,
@@ -123,6 +123,67 @@ def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends
         session.commit()
         session.refresh(produto)
         return produto
+
+# Cadastra produtos em massa
+@router.post("/massa", response_model=List[BaseProduto])
+def cadastrar_produtos_em_massa(
+    produtos_data: List[BaseProduto],
+    admin: Annotated[Admin, Depends(get_logged_admin)],
+):
+    if not admin.admin:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT,
+            detail="Acesso negado!"
+        )
+    
+    produtos_cadastrados = []
+
+    with Session(get_engine()) as session:
+        for produto_data in produtos_data:
+
+            # Verifica se o produto já existe
+            sttm = select(Produto).where(Produto.nome == produto_data.nome)
+            produto_existente = session.exec(sttm).first()
+
+            if produto_existente:
+                continue  # Pula produtos já cadastrados
+
+            # Valida preço e quantidade
+            if produto_data.preco <= 0 or produto_data.quantidade_estoque <= 0:
+                continue  # Pula produtos inválidos
+
+            # Verifica categoria
+            sttm = select(Categoria).where(Categoria.id == produto_data.categoria)
+            categoria = session.exec(sttm).first()
+
+            if not categoria:
+                continue  # Pula se a categoria não existe
+
+            # Cria e adiciona o produto
+            produto = Produto(
+                nome=produto_data.nome,
+                preco=produto_data.preco,
+                foto=produto_data.foto,
+                marca=produto_data.marca,
+                categoria=produto_data.categoria,
+                descricao=produto_data.descricao,
+                quantidade_estoque=produto_data.quantidade_estoque,
+                personalizado=produto_data.personalizado
+            )
+
+            session.add(produto)
+            session.commit()
+            session.refresh(produto)
+
+            produtos_cadastrados.append(produto)
+
+    if not produtos_cadastrados:
+        raise HTTPException(
+            status_code=status.HTTP_200_OK,
+            detail="Nenhum produto foi cadastrado. Verifique se já existem ou se os dados estão corretos."
+        )
+
+    return produtos_cadastrados
 
 # Atualiza produtos por id  
 @router.patch("/{produto_id}")

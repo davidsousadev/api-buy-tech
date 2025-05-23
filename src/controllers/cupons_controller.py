@@ -122,7 +122,7 @@ def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_
         cupom = session.exec(sttm).first()
     
     if cupom:
-        raise HTTPException(status_code=400, detail='Cupom já existe com esse nome!')
+        raise HTTPException(status_code=status.HTTP_200_OK, detail='Cupom já existe com esse nome!')
     
     
     
@@ -139,7 +139,7 @@ def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_
         session.refresh(cupom)
         return cupom
     else: 
-        raise HTTPException(status_code=400, detail='Cupom invalido!')
+        raise HTTPException(status_code=status.HTTP_200_OK00, detail='Cupom invalido!')
  
 # Administradores Atualizar cupons   
 @router.patch("/{cupom_id}")

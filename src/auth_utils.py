@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Annotated, Literal
 from passlib.context import CryptContext
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from jwt import ExpiredSignatureError, InvalidTokenError
@@ -24,10 +24,10 @@ async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
     
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
-    exception = HTTPException(status_code=401, detail='Cliente Não autorizado!')
-    email_invalid = HTTPException(status_code=401, detail='E-mail do Cliente Não está no banco!')
-    invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
-    expired_exception = HTTPException(status_code=401, detail='Token expirado!')
+    exception = HTTPException(status_code=status.HTTP_200_OK, detail='Cliente Não autorizado!')
+    email_invalid = HTTPException(status_code=status.HTTP_200_OK, detail='E-mail do Cliente Não está no banco!')
+    invalid_exception = HTTPException(status_code=status.HTTP_200_OK, detail='Token inválido!')
+    expired_exception = HTTPException(status_code=status.HTTP_200_OK, detail='Token expirado!')
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
@@ -53,10 +53,10 @@ async def get_logged_cliente(token: Annotated[str, Depends(oauth2_scheme)]):
 async def get_logged_admin(token: Annotated[str, Depends(oauth2_scheme)]):
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
-    exception = HTTPException(status_code=401, detail='Admin Não autorizado!')
-    email_invalid = HTTPException(status_code=401, detail='E-mail do Admin Não está no banco!')
-    invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
-    expired_exception = HTTPException(status_code=401, detail='Token expirado!')
+    exception = HTTPException(status_code=status.HTTP_200_OK, detail='Admin Não autorizado!')
+    email_invalid = HTTPException(status_code=status.HTTP_200_OK, detail='E-mail do Admin Não está no banco!')
+    invalid_exception = HTTPException(status_code=status.HTTP_200_OK, detail='Token inválido!')
+    expired_exception = HTTPException(status_code=status.HTTP_200_OK, detail='Token expirado!')
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
@@ -83,10 +83,10 @@ async def get_logged_revendedor(token: Annotated[str, Depends(oauth2_scheme)]):
     
     # Vai pegar o Token na Request, se válido
     # pegará o usuário no BD para confirmar e retornar ele
-    exception = HTTPException(status_code=401, detail='Revendedor Não autorizado!')
-    email_invalid = HTTPException(status_code=401, detail='E-mail do Revendedor Não está no banco!')
-    invalid_exception = HTTPException(status_code=401, detail='Token inválido!')
-    expired_exception = HTTPException(status_code=401, detail='Token expirado!')
+    exception = HTTPException(status_code=status.HTTP_200_OK, detail='Revendedor Não autorizado!')
+    email_invalid = HTTPException(status_code=status.HTTP_200_OK, detail='E-mail do Revendedor Não está no banco!')
+    invalid_exception = HTTPException(status_code=status.HTTP_200_OK, detail='Token inválido!')
+    expired_exception = HTTPException(status_code=status.HTTP_200_OK, detail='Token expirado!')
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
@@ -111,9 +111,9 @@ async def get_logged_revendedor(token: Annotated[str, Depends(oauth2_scheme)]):
 
     
 async def verifica_pagamento(token: str):
-    exception = HTTPException(status_code=401, detail="Não autorizado!")
-    invalid_exception = HTTPException(status_code=401, detail="Token inválido!")
-    expired_exception = HTTPException(status_code=401, detail="Token expirado!")
+    exception = HTTPException(status_code=status.HTTP_200_OK, detail="Não autorizado!")
+    invalid_exception = HTTPException(status_code=status.HTTP_200_OK, detail="Token inválido!")
+    expired_exception = HTTPException(status_code=status.HTTP_200_OK, detail="Token expirado!")
 
     try:
         # Decodifica o token JWT

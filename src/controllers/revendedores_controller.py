@@ -48,7 +48,7 @@ async def verificar_cnpj(cnpj: int):
         revendedor = session.exec(statement).first()
         
         if revendedor:
-            raise HTTPException(status_code=400, detail="CNPJ já cadastrado.")
+            raise HTTPException(status_code=status.HTTP_200_OK, detail="CNPJ já cadastrado.")
 
     return {"cnpj": True}
 
