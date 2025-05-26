@@ -1,65 +1,100 @@
-# API do projeto - > [BUY TECH](https://github.com/davidsousadev/buy-tech)
+# 🚀 API do Projeto — [BUY TECH](https://github.com/davidsousadev/buy-tech)
 
-## Estrutura inicial
+## 📝 Descrição
+
+Esta API foi desenvolvida utilizando **FastAPI** (Python). As instruções de instalação estão disponíveis no arquivo [📄 instrucoes.md](/instrucoes.md).
+
+A estrutura da API atualmente possui **13 grupos de controllers**, conforme apresentados na seção [📂 Estrutura Inicial](#-estrutura-inicial):
+
+- 👤 Admins
+- 🧑‍💼 Clientes
+- 📧 E-mails
+- 🏷️ Categorias
+- 🎟️ Cupons
+- 🛒 Produtos
+- 🛍️ Carrinhos
+- 📦 Pedidos
+- 🔧 Operações
+- 🏪 Revendedores
+- 🛒 Carrinhos Revendedor
+- 📦 Pedidos Revendedor
+- 🔧 Operações Revendedor
+
+Atualmente, a API possui **98 endpoints**, utilizando os métodos HTTP:
+
+- `OPTIONS`
+- `GET`
+- `POST`
+- `PATCH`
+
+> 🔥 **Observação:** Não há rotas de exclusão. Essa é uma estratégia baseada em métricas para recuperar cadastros e carrinhos abandonados, além de fomentar as vendas.
+
+A documentação interativa da API pode ser acessada via **Swagger UI** na rota:  
+➡️ [http://0.0.0.0:8000/docs](http://0.0.0.0:8000/docs)
+
+> 🔒 Algumas rotas possuem autenticação via **JWT Token**, utilizando tanto **cookies de sessão**, quanto criptografia para proteger dados sensíveis como senhas e links de pagamentos.
+
+📄 As regras de negócio e detalhes das classes estão descritas no documento de especificação do projeto:  
+➡️ [Documento do Projeto](https://cutme.vercel.app/13ECfOSTxd)
+
+---
+
+## 📂 Estrutura Inicial
 
 ```plaintext
 api-buy-tech/
 ├── src/
+│   ├── controllers/                                   # 🧠 Lógica das rotas
+│   │   ├── admins_controller.py                       # 👤 Rotas de Admins
+│   │   ├── carrinhos_controller.py                    # 🛍️ Rotas de Carrinhos
+│   │   ├── carrinhos_revendedor_controller.py         # 🛍️ Rotas de Carrinhos Revendedor
+│   │   ├── categorias_controller.py                   # 🏷️ Rotas de Categorias
+│   │   ├── clientes_controller.py                     # 👥 Rotas de Clientes
+│   │   ├── cupons_controller.py                       # 🎟️ Rotas de Cupons
+│   │   ├── emails_controller.py                       # 📧 Rotas de E-mails
+│   │   ├── operacoes_controller.py                    # 🔧 Rotas de Operações
+│   │   ├── operacoes_revendedor_controller.py         # 🔧 Rotas de Operações Revendedor
+│   │   ├── pedidos_controller.py                      # 📦 Rotas de Pedidos
+│   │   ├── pedidos_revendedor_controller.py           # 📦 Rotas de Pedidos Revendedor
+│   │   ├── produtos_controller.py                     # 🛒 Rotas de Produtos
+│   │   └── revendedores_controller.py                 # 🏪 Rotas de Revendedores
 │   │
-│   ├── controllers/                                            # Logica das Rotas
-│   │   |
-│   │   ├── admins_controller.py                                # Rotas dos Admin
-│   │   ├── carrinhos_controller.py                             # Rotas dos Carrinho de Compras
-│   │   ├── carrinhos_revendedor_controller.py                  # Rotas dos Carrinho de Compras Revendedor
-│   │   ├── categorias_controller.py                            # Rotas das Categorias
-│   │   ├── clientes_controller.py                              # Rotas dos Clientes
-│   │   ├── cupons_controller.py                                # Rotas dos Cupons
-│   │   ├── emails_controller.py                                # Rotas dos E-mails
-│   │   ├── operacoes_controller.py                             # Rotas das Operações
-│   │   ├── operacoes_revendedor_controller.py                  # Rotas das Operações Revendedor
-│   │   ├── pedidos_controller.py                               # Rotas das Pedidos
-│   │   ├── pedidos_revendedor_controller.py                    # Rotas das Pedidos Revendedor
-│   │   ├── produtos_controller.py                              # Rotas dos Produtos
-│   │   └── revendedores_controller.py                          # Rotas dos Revendedores
-│   │                           
-│   ├── html/                                                   # Templates de E-mail HTML
-│   │   |
-│   │   ├── email_confirmacao.py                                # E-mail de confirmação de conta
-│   │   ├── email_pedido_realizado.py                           # E-mail de pedido solicitado
-│   │   └── email_redefinir_senha.py                            # E-mail de redefinição de senha
-│   │                           
-│   ├── models/                                                 # Modelos de dados
-│   │   |
-│   │   ├── admins_models.py                                    # Dados dos Admin
-│   │   ├── carrinhos_models.py                                 # Dados dos Carrinhos de Compras
-│   │   ├── carrinhos_revendedor_models.py                      # Dados dos Carrinhos de Compras
-│   │   ├── categorias_models.py                                # Dados das Categorias
-│   │   ├── clientes_models.py                                  # Dados dos Clientes
-│   │   ├── cupons_models.py                                    # Dados dos Cupons
-│   │   ├── emails_models.py                                    # Dados dos E-mails
-│   │   ├── operacoes_models.py                                 # Dados dos Operações
-│   │   ├── operacoes_revendedor_models.py                      # Dados dos Operações
-│   │   ├── pedidos_models.py                                   # Dados das Pedidos
-│   │   ├── pedidos_revendedor_models.py                        # Dados das Pedidos
-│   │   ├── produtos_models.py                                  # Dados dos Produtos
-│   │   └── revendedores_models.py                              # Dados dos Revendedores
-│   │                           
-│   ├── models/                                                 # Modelos de dados
-│   │   |
-│   │   ├── _test_cadastro_admin.py                             # Sendo implementado teste de cadastro de admin
-│   │   ├── README.md                                           # Documentação dos testes
-│   │   └── test__main.py                                       # Teste principal
-|   |
-│   ├── auth_utils.py     # Arquivo de autenticação de usuários / admins / revendedores
-│   ├── database.py       # Arquivo de configuração de banco de dados 
-│   └── main.py           # Arquivo principal de inicialização
+│   ├── html/                                          # 💌 Templates de E-mails (HTML)
+│   │   ├── email_confirmacao.py                       # 📩 E-mail de confirmação de conta
+│   │   ├── email_pedido_realizado.py                  # 📦 E-mail de pedido realizado
+│   │   └── email_redefinir_senha.py                   # 🔐 E-mail de redefinição de senha
+│   │
+│   ├── models/                                        # 🗂️ Modelos de dados (ORM)
+│   │   ├── admins_models.py                           # 👤 Dados de Admins
+│   │   ├── carrinhos_models.py                        # 🛍️ Dados de Carrinhos
+│   │   ├── carrinhos_revendedor_models.py             # 🛍️ Dados de Carrinhos Revendedor
+│   │   ├── categorias_models.py                       # 🏷️ Dados de Categorias
+│   │   ├── clientes_models.py                         # 👥 Dados de Clientes
+│   │   ├── cupons_models.py                           # 🎟️ Dados de Cupons
+│   │   ├── emails_models.py                           # 📧 Dados de E-mails
+│   │   ├── operacoes_models.py                        # 🔧 Dados de Operações
+│   │   ├── operacoes_revendedor_models.py             # 🔧 Dados de Operações Revendedor
+│   │   ├── pedidos_models.py                          # 📦 Dados de Pedidos
+│   │   ├── pedidos_revendedor_models.py               # 📦 Dados de Pedidos Revendedor
+│   │   ├── produtos_models.py                         # 🛒 Dados de Produtos
+│   │   └── revendedores_models.py                     # 🏪 Dados de Revendedores
+│   │
+│   ├── tests/                                         # 🧪 Testes automatizados
+│   │   ├── _test_cadastro_admin.py                    # 🚧 Teste de cadastro de Admin (em desenvolvimento)
+│   │   ├── README.md                                  # 🗒️ Documentação dos testes
+│   │   └── test__main.py                              # 🧠 Teste principal
+│   │
+│   ├── auth_utils.py                                  # 🔐 Autenticação de usuários/admins/revendedores
+│   ├── database.py                                    # 🗄️ Configuração do banco de dados
+│   └── main.py                                        # 🚀 Arquivo principal de inicialização da API
 │
-├── .env                  # Variaveis de ambiente¹
-├── .envexample           # Exemplo das Variaveis de ambiente
-├── Dockerfile            # Receita Docker
-├── instrucoes.md         # Arquivo com as instruções de instalação
-├── README.md             # Project documentation
-└── requirements.txt      # Arquivo com as blibiotecas ultilizadas no projeto²
+├── .env                                               # 🔑 Variáveis de ambiente¹
+├── .envexample                                        # 🔑 Exemplo de variáveis de ambiente
+├── Dockerfile                                         # 🐳 Configuração Docker
+├── instrucoes.md                                      # 📄 Instruções de instalação²
+├── README.md                                          # 📝 Documentação do projeto
+└── requirements.txt                                   # 📦 Dependências do projeto
+
 ```
 
 * ¹ Crie um arquivo .env e insira as variaveis conforme o arquivo .envexample
