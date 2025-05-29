@@ -57,7 +57,7 @@ async def verificar_cnpj(cnpj: int):
 def listar_revendedores(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar revendedores."
         )
 
@@ -81,7 +81,7 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest, ref: int | 
 
         if registro_existente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
             )
 
@@ -95,7 +95,7 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest, ref: int | 
 
         if email_existente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='E-mail já cadastrado anteriormente!'
             )
             
@@ -105,13 +105,13 @@ def cadastrar_revendedores(revendedor_data: SignUpRevendedorRequest, ref: int | 
 
         if cnpj_existente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='CNPJ já cadastrado anteriormente!'
             )
 
         if revendedor_data.password != revendedor_data.confirm_password:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='Senhas não coincidem!'
             )
 
@@ -185,17 +185,17 @@ def logar_revendedores(signin_data: SignInRevendedorRequest):
     revendedor = session.exec(sttm).first()
     
     if not revendedor: # Não encontrou Revendedor
-      raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, 
+      raise HTTPException(status_code=status.HTTP_200_OK, 
         detail='Email incorreto!')
     
     if revendedor.cod_confirmacao_email !="Confirmado":
       raise HTTPException(
-        status_code=status.HTTP_204_NO_CONTENT, 
+        status_code=status.HTTP_200_OK, 
         detail='E-mail não confirmado!')
     
     if revendedor.status == False:
       raise HTTPException(
-        status_code=status.HTTP_204_NO_CONTENT, 
+        status_code=status.HTTP_200_OK, 
         detail='Conta de revendedor desativada!') 
     
     # encontrou, então verificar a senha
@@ -205,7 +205,7 @@ def logar_revendedores(signin_data: SignInRevendedorRequest):
 
     if not is_correct:
       raise HTTPException(
-        status_code=status.HTTP_204_NO_CONTENT, 
+        status_code=status.HTTP_200_OK, 
         detail='E-mail e/ou senha incorrento(S)')
     
     # Tá tudo OK pode gerar um Token JWT e devolver
@@ -229,7 +229,7 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
 ):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
@@ -240,13 +240,13 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
 
         if not revendedor_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Revendedor não encontrado."
             )
         
         if revendedor_to_update.cod_confirmacao_email != "Confirmado":
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="E-mail não confirmado!"
             )
         
@@ -267,7 +267,7 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
 
             if registro_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
 
@@ -283,7 +283,7 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
 
             if email_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente!'
                 )
 
@@ -296,7 +296,7 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
             revendedor_cnpj = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
             if session.exec(revendedor_cnpj).first():
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail=f"CNPJ já cadastrado por outro Revendedorx!{revendedor_to_update.cnpj} != {revendedor_data.cnpj}"
                 )
             revendedor_to_update.cnpj = revendedor_data.cnpj
@@ -309,7 +309,7 @@ def atualizar_revendedor(revendedor_data: UpdateRevendedorRequest, revendedor: A
             
             if revendedor_duplicicade and revendedor_duplicicade.cnpj != revendedor_data.cnpj:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Incrição Estadual já cadastrada por outro Revendedor!"
                 )
             revendedor_to_update.inscricao_estadual = revendedor_data.inscricao_estadual
@@ -333,7 +333,7 @@ def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, D
     
     if revendedor_id != revendedor.id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -343,7 +343,7 @@ def desativar_revendedor(revendedor_id: int, revendedor: Annotated[Revendedor, D
 
         if not revendedor_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Revendedor não encontrado."
             )
 
@@ -360,7 +360,7 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
 ):
     if admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
@@ -371,13 +371,13 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
 
         if not revendedor_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Revendedor não encontrado."
             )
         
         if revendedor_to_update.cod_confirmacao_email != "Confirmado":
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="E-mail não confirmado!"
             )
         
@@ -398,7 +398,7 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
 
             if registro_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
 
@@ -414,7 +414,7 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
 
             if email_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente!'
                 )
 
@@ -428,7 +428,7 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
             revendedor_cnpj = select(Revendedor).where(Revendedor.cnpj == revendedor_data.cnpj)
             if session.exec(revendedor_cnpj).first():
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="CNPJ já cadastrado por outro Revendedor!"
                 )
             revendedor_to_update.cnpj = revendedor_data.cnpj
@@ -441,7 +441,7 @@ def atualizar_revendedor_admin_por_id( revendedor_id: int, revendedor_data: Upda
             
             if revendedor_duplicicade and revendedor_duplicicade.cnpj != revendedor_data.cnpj:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Incrição Estadual já cadastrada por outro Revendedor!"
                 )
             revendedor_to_update.inscricao_estadual = revendedor_data.inscricao_estadual
@@ -465,7 +465,7 @@ def atualizar_status_admin_revendedor_por_id(revendedor_id: int, admin: Annotate
     
     if not admin.admin or not admin.status:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -475,7 +475,7 @@ def atualizar_status_admin_revendedor_por_id(revendedor_id: int, admin: Annotate
 
         if not revendedor_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Revendedor não encontrado."
             )
 

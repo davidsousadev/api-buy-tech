@@ -53,7 +53,7 @@ def listar_pedidos_admin(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -98,7 +98,7 @@ def listar_pedidos(
 ):
     if not cliente.id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -133,7 +133,7 @@ def listar_pedidos_por_id(
 ):
     if not cliente.id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -144,7 +144,7 @@ def listar_pedidos_por_id(
             return pedido
         else:
             raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Pedido invalido!"
         )
 
@@ -156,7 +156,7 @@ def cadastrar_pedido(
 ):
     if not cliente.id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -166,7 +166,7 @@ def cadastrar_pedido(
         cliente = session.exec(sttm).first()
         if not cliente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Cliente não encontrado."
             )
 
@@ -177,7 +177,7 @@ def cadastrar_pedido(
         for pedido in pedidos_do_cliente:
             if pedido.status is True and len(pedido.codigo) != 6:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Cliente tem pedidos não pagos."
                 )
             if not pedido.status and not pedido.codigo:
@@ -192,7 +192,7 @@ def cadastrar_pedido(
         itens = session.exec(statement).all()
         if not itens:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="O carrinho está vazio."
             )
 
@@ -207,12 +207,12 @@ def cadastrar_pedido(
                 produto = session.exec(produto_sttm).first()
                 if not produto:
                     raise HTTPException(
-                        status_code=status.HTTP_204_NO_CONTENT,
+                        status_code=status.HTTP_200_OK,
                         detail=f"Produto com código {item.produto_codigo} não encontrado."
                     )
                 if produto.quantidade_estoque < item.quantidade:
                     raise HTTPException(
-                        status_code=status.HTTP_204_NO_CONTENT,
+                        status_code=status.HTTP_200_OK,
                         detail=f"Quantidade solicitada para o produto '{produto.nome}' excede o estoque disponível!"
                     )
                 # Realiza a multiplicação com ponto flutuante
@@ -226,7 +226,7 @@ def cadastrar_pedido(
 
         if valor_items == 0:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Os itens do carrinho já estão em pedido."
             )
 
@@ -242,7 +242,7 @@ def cadastrar_pedido(
             if cupom:
                 if cupom.quantidade_de_ultilizacao == 0:
                     raise HTTPException(
-                        status_code=status.HTTP_204_NO_CONTENT,
+                        status_code=status.HTTP_200_OK,
                         detail="A quantidade máxima de cupons já foi resgatada."
                     )
                 valor_cupom = cupom.valor  # Pode ser float
@@ -371,7 +371,7 @@ def cancelar_pedido_por_id(
 ):
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -382,7 +382,7 @@ def cancelar_pedido_por_id(
 
         if not pedido:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Pedido não localizado!"
             )
         # Reverter possível uso de pontos de fidelidade
@@ -391,7 +391,7 @@ def cancelar_pedido_por_id(
             cliente_db = session.exec(sttm).first()
             if not cliente_db:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Cliente não pode cancelar pedido de outro cliente."
                 )
             cliente_db.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
@@ -430,13 +430,13 @@ def cancelar_pedido_por_id(
         
         if pedido and pedido.codigo == "":
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="O pedido não pode ser cancelado, pois já foi cancelado anteriormente!"
             )
         
         else:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="O pedido não pode ser cancelado, pois foi pago!"
             )
 
@@ -448,7 +448,7 @@ def cancelar_pedido_por_id_admin(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -459,7 +459,7 @@ def cancelar_pedido_por_id_admin(
 
         if not pedido:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Pedido não localizado!"
             )
         # Reverter possível uso de pontos de fidelidade
@@ -468,7 +468,7 @@ def cancelar_pedido_por_id_admin(
             cliente_db = session.exec(sttm).first()
             if not cliente_db:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Cliente não pode cancelar pedido de outro cliente."
                 )
             cliente_db.pontos_fidelidade += pedido.pontos_fidelidade_resgatados
@@ -507,12 +507,12 @@ def cancelar_pedido_por_id_admin(
         
         if pedido and pedido.codigo == "":
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="O pedido não pode ser cancelado, pois já foi cancelado anteriormente!"
             )
         
         else:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="O pedido não pode ser cancelado, pois foi pago!"
             )

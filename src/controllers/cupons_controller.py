@@ -27,7 +27,7 @@ def verificar_cupons( cupom_nome: str):
         if cupom:
             if cupom.quantidade_de_ultilizacao == 0:
                     raise HTTPException(
-                        status_code=status.HTTP_204_NO_CONTENT,
+                        status_code=status.HTTP_200_OK,
                         detail="A quantidade máxima de cupons já foi resgatada."
                     )
             else:
@@ -51,7 +51,7 @@ def listar_cupons(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar cupons."
         )
 
@@ -83,7 +83,7 @@ def listar_cupons(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar cupons."
         )
 
@@ -96,7 +96,7 @@ def listar_cupons(
         if cupom:
             return cupom
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Cupom não localizado."
         )
 
@@ -106,13 +106,13 @@ def cadastrar_cupons(cupom_data: BaseCupom, admin: Annotated[Admin, Depends(get_
 ):
     if cupom_data.valor>100 and cupom_data.tipo==False:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Cupom de desconto não pode ser mais que 100%."
             )
     
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
         
@@ -150,13 +150,13 @@ def atualizar_cupons_por_id(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
     if cupom_data.valor > 100 and cupom_data.tipo == False:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Cupom de desconto não pode ser mais que 100%."
         ) 
 
@@ -167,7 +167,7 @@ def atualizar_cupons_por_id(
 
         if not cupom_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Cupom não encontrado."
             )
         
@@ -177,7 +177,7 @@ def atualizar_cupons_por_id(
         # Se encontrar um cupom com o mesmo nome e for diferente do cupom atual, lança um erro
         if cupom_existente and cupom_existente.id != cupom_id:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Cupom já existe."
             )
         
@@ -185,7 +185,7 @@ def atualizar_cupons_por_id(
         if cupom_to_update.resgatado == True:
             if cupom_data.nome != cupom_to_update.nome and cupom_data.valor != cupom_to_update.valor and cupom_data.tipo != cupom_to_update.tipo:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Cupom já resgatado não pode ter dados atualizado."
                 )
 

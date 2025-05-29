@@ -51,7 +51,7 @@ async def options_emails():
 def saldo_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
         
@@ -66,7 +66,7 @@ def saldo_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)])
         
         if not cliente_cadastrado:
             raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Cliente invalido!"
         )
 
@@ -75,7 +75,7 @@ def saldo_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)])
 def extrato_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
         
@@ -97,7 +97,7 @@ def extrato_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
 def creditos_dos_cliente(cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -122,7 +122,7 @@ def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
 
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -148,7 +148,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
     
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
@@ -167,7 +167,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
         }
         if codigo_de_confirmacao_token["idcliente"]!=cliente.id:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Não e possivel pagar a conta de outro cliente!"
             )
         with Session(get_engine()) as session:
@@ -177,13 +177,13 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
 
             if not cliente_to_update:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Usuário não encontrado."
                 )
 
             if cliente_to_update.cod_confirmacao_email != "Confirmado":
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT, 
+                    status_code=status.HTTP_200_OK, 
                     detail="E-mail não confirmado!"
                 )
             # Retira do saldo
@@ -191,7 +191,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 cliente_to_update.pontos_fidelidade -= codigo_de_confirmacao_token["valor"]
             else: 
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Pagamento não realizado, pontos fidelidade insuficientes!"
                     )   
             statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["cupom_de_desconto_data"])
@@ -218,7 +218,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 is_correct = pwd_context.verify(codigo_de_confirmacao_token["codigo_de_confirmacao"], pedido.codigo)
                 if not is_correct:
                   raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT, 
+                    status_code=status.HTTP_200_OK, 
                     detail='Codigo de confirmação invalido!')
 
                 pedido.codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
@@ -237,7 +237,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                             produto.quantidade -= 1
                         else: 
                             raise HTTPException(
-                                status_code=status.HTTP_204_NO_CONTENT, 
+                                status_code=status.HTTP_200_OK, 
                                 detail='Produto no pedido sem estoque!')
                         session.add(produto)
 
@@ -286,7 +286,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
 
             if operacao:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Pagamento já foi realizado anteriormente!"
                     )
             
@@ -328,7 +328,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
 
             if operacao:
                 raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Caskback não pode ser aplicado pois ja foi aplicado anteriormente!"
             )
             operacao_caskback = Operacao(
@@ -351,7 +351,7 @@ async def pendencias_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged
     
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     with Session(get_engine()) as session:
@@ -373,7 +373,7 @@ async def pendencias_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged
 def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar receitas."
         )
 
@@ -386,7 +386,7 @@ def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
                   return pagamentos  
         if not pagamentos:
             raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Nenhum pagamento Realizado"
                 )
 
@@ -395,7 +395,7 @@ def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
 def listar_debitos(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar receitas."
         )
 
@@ -419,7 +419,7 @@ def listar_receitas(
     ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar receitas."
         )
 

@@ -22,7 +22,7 @@ def listar_carrinho(
 ):
     if not revendedor.id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
@@ -36,7 +36,7 @@ def listar_carrinho(
             return itens
         else:
             raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Carrinho vazio!"
         )
 
@@ -49,7 +49,7 @@ def listar_carrinhos_admin(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -71,7 +71,7 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinhoRevendedor,
                             revendedor: Annotated[Revendedor, Depends(get_logged_revendedor)]):
     if not revendedor.id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -82,13 +82,13 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinhoRevendedor,
 
         if not revendedor:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não encontrado."
             )
             
         if carrinho_data.revendedor_id != revendedor.id:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não pode adicionar itens no carrinho de outro usuário."
             )
             
@@ -97,17 +97,17 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinhoRevendedor,
         produto = session.exec(sttm).first()
         if not produto:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Produto não encontrado!"
             )
         if produto.quantidade_estoque==0:
             raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Produto sem estoque!"
                 ) 
         if produto.quantidade_estoque<carrinho_data.quantidade:
             raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Pedido maior que estoque!"
                 )             
             
@@ -122,14 +122,14 @@ def cadastrar_item_carrinho(carrinho_data: BaseCarrinhoRevendedor,
             # Produto no CarrinhoRevendedor, mas ainda não foi comprado
             if not item.status and item.quantidade != 0 and item.codigo == "":
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Item já está no carrinho!"
                 )
 
             # Produto está em pedido e não foi pago
             if item.status and item.quantidade != 0 and len(item.codigo) > 6:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Item já está em pedido e não foi pago!"
                 )
 
@@ -168,7 +168,7 @@ def atualizar_item_no_carrinho_por_id(
 ):
     if not revendedor:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
         
@@ -178,17 +178,17 @@ def atualizar_item_no_carrinho_por_id(
         produto = session.exec(sttm).first()
         if not produto:
             raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Produto não encontrado!"
                 )
         if produto.quantidade_estoque==0:
             raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Produto sem estoque!"
                 )
         if produto.quantidade_estoque<carrinho_data.quantidade:
             raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail="Pedido maior que estoque!"
                 ) 
                 
@@ -197,13 +197,13 @@ def atualizar_item_no_carrinho_por_id(
 
         if not item_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Item não encontrado."
             )
             
         if item_to_update.status==True and len(item_to_update.codigo) > 6:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Item não pode ser atualizado pois já esta em PedidoRevendedor."
             )
             
@@ -216,7 +216,7 @@ def atualizar_item_no_carrinho_por_id(
             session.refresh(item_to_update)
             
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Item removido do carrinho!"
             )
         

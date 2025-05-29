@@ -84,7 +84,7 @@ async def verificar_cpf(cpf: str):
 def listar_clientes(admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar usuarios."
         )
 
@@ -98,7 +98,7 @@ def listar_clientes(admin: Annotated[Admin, Depends(get_logged_admin)]):
 def listar_clientes_por_id(admin: Annotated[Admin, Depends(get_logged_admin)], cliente_id: int):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem listar usuarios."
         )
 
@@ -122,7 +122,7 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
 
         if registro_existente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
             )
 
@@ -136,7 +136,7 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
 
         if email_existente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='E-mail já cadastrado anteriormente!'
             )
 
@@ -149,14 +149,14 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
 
         if cpf_existente:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='CPF já cadastrado anteriormente!'
             )
 
         # Verifica se as senhas coincidem
         if cliente_data.password != cliente_data.confirm_password:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail='Senhas não coincidem!'
             )
 
@@ -283,7 +283,7 @@ def atualizar_clientes_por(
     
     if not cliente:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -293,13 +293,13 @@ def atualizar_clientes_por(
 
         if not cliente_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não encontrado."
             )
         
         if cliente_to_update.cod_confirmacao_email != "Confirmado":
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT, 
+                status_code=status.HTTP_200_OK, 
                 detail="E-mail não confirmado!"
             )
 
@@ -319,7 +319,7 @@ def atualizar_clientes_por(
 
             if registro_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
 
@@ -335,7 +335,7 @@ def atualizar_clientes_por(
 
             if email_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente!'
                 )
 
@@ -354,7 +354,7 @@ def atualizar_clientes_por(
 
             if cpf_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='CPF já cadastrado anteriormente!'
                 )
 
@@ -383,7 +383,7 @@ def desativar_clientes(cliente_id: int, cliente: Annotated[Cliente, Depends(get_
 ):
     if cliente.id != cliente_id:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
 
@@ -393,7 +393,7 @@ def desativar_clientes(cliente_id: int, cliente: Annotated[Cliente, Depends(get_
 
         if not cliente_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não encontrado."
             )
 
@@ -413,7 +413,7 @@ def atualizar_clientes_por_id(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
@@ -423,13 +423,13 @@ def atualizar_clientes_por_id(
 
         if not cliente_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não encontrado."
             )
         
         if cliente_to_update.cod_confirmacao_email != "Confirmado":
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT, 
+                status_code=status.HTTP_200_OK, 
                 detail="E-mail não confirmado!"
             )
 
@@ -449,7 +449,7 @@ def atualizar_clientes_por_id(
 
             if registro_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente. Tente recuperar o e-mail!'
                 )
 
@@ -465,7 +465,7 @@ def atualizar_clientes_por_id(
 
             if email_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='E-mail já cadastrado anteriormente!'
                 )
 
@@ -484,7 +484,7 @@ def atualizar_clientes_por_id(
 
             if cpf_existente:
                 raise HTTPException(
-                    status_code=status.HTTP_204_NO_CONTENT,
+                    status_code=status.HTTP_200_OK,
                     detail='CPF já cadastrado anteriormente!'
                 )
 
@@ -512,7 +512,7 @@ def atualizar_clientes_por_id(
 def atualizar_status_clientes_admin_por_id(cliente_id: int, admin: Annotated[Admin, Depends(get_logged_admin)]):
     if not admin.admin or not admin.status:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado! Apenas administradores podem desativar ou ativar usuários."
         )
 
@@ -522,7 +522,7 @@ def atualizar_status_clientes_admin_por_id(cliente_id: int, admin: Annotated[Adm
 
         if not cliente_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Usuário não encontrado."
             )
             

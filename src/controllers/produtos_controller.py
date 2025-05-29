@@ -122,7 +122,7 @@ def cadastrar_produto(produto_data: BaseProduto, admin: Annotated[Admin, Depends
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
         
@@ -171,7 +171,7 @@ def cadastrar_produtos_em_massa(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
@@ -233,7 +233,7 @@ def atualizar_produto_por_id(
 ):
     if not admin.admin:
         raise HTTPException(
-            status_code=status.HTTP_204_NO_CONTENT,
+            status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
         
@@ -243,7 +243,7 @@ def atualizar_produto_por_id(
 
         if not produto_to_update:
             raise HTTPException(
-                status_code=status.HTTP_204_NO_CONTENT,
+                status_code=status.HTTP_200_OK,
                 detail="Produto não encontrado."
             )
         
