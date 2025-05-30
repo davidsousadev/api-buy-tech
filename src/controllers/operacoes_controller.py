@@ -249,7 +249,6 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
             # Realiza as apoerações    
             # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)
             # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
-            
             # Operação Referência
             if cliente_to_update.cod_indicacao != 0:
                 sttm = select(Cliente).where(Cliente.id == cliente_to_update.cod_indicacao)
@@ -300,13 +299,15 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                     tipo=2,
                     codigo=cliente.id
                 )
+
                 if codigo_de_confirmacao_token["valor"] >= 5000:
                     # Verifica se o cliente de indicação já é do clube fidelidade
-                    cliente_to_update.clube_fidelidade = True
-                    # Salvar a indicacao
-                    session.add(cliente_de_indicacao)
-                    session.commit()
-                    session.refresh(cliente_de_indicacao)
+                    if cliente_to_update.clube_fidelidade == False: 
+                        cliente_to_update.clube_fidelidade = True
+                        # Salvar a indicacao
+                        session.add(cliente_to_update)
+                        session.commit()
+                        session.refresh(cliente_to_update)
 
                 # Salvar as alterações no banco de dados
                 session.add(operacao_pagamento)
