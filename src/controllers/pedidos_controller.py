@@ -105,6 +105,7 @@ def listar_pedidos(
     with Session(get_engine()) as session:
         statement = select(Pedido).where(Pedido.cliente == cliente.id)
         filtros = [Pedido.cliente == cliente.id] 
+        
         if id is not None:
             filtros.append(Pedido.id == id)
         if produtos is not None:
@@ -119,11 +120,16 @@ def listar_pedidos(
             filtros.append(Pedido.status == status)
         if codigo is not None:
             filtros.append(Pedido.codigo == codigo)
+
         if filtros:
             statement = statement.where(and_(*filtros))
+
+        statement = statement.order_by(Pedido.id.desc())
+
         pedidos = session.exec(statement).all()
 
         return pedidos
+
 
 # Lista pedidos dos clientes por id
 @router.get("/{pedido_id}")

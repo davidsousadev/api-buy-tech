@@ -57,7 +57,7 @@ def listar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
         return [AdminResponse.model_validate(u) for u in admins]
 
 # Cadastra administradores               
-@router.post('/cadastrar')
+@router.post("/cadastrar", status_code=status.HTTP_201_CREATED)
 def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
     
     with Session(get_engine()) as session:
@@ -155,7 +155,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
             session.add(admin)
             session.commit()
             session.refresh(admin)
-            return {"message": "Administrador cadastrado com sucesso! E-mail de confirmação enviado."}
+            return {"detail": True, "message": "Administrador cadastrado com sucesso!"}
 
         raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -163,7 +163,7 @@ def cadastrar_admins(admin_data: SignUpAdminRequest, ref: int | None = None):
             )
 
 # Logar administradores        
-@router.post('/logar')
+@router.post('/logar', status_code=status.HTTP_200_OK)
 def logar_admins(signin_data: SignInAdminRequest):
   with Session(get_engine()) as session:
     # pegar usuário por email
@@ -211,7 +211,7 @@ def autenticar_admins(admin: Annotated[Admin, Depends(get_logged_admin)]):
   return admin
 
 # Atualiza alguns dados dos administradores
-@router.patch("/atualizar")
+@router.patch("/atualizar", status_code=status.HTTP_200_OK)
 def atualizar_adminis(
     admin_data: UpdateAdminRequest,
     admin: Annotated[Admin, Depends(get_logged_admin)],
@@ -312,7 +312,7 @@ def atualizar_adminis(
         session.commit()
         session.refresh(admin_to_update)
 
-        return {"message": "Administrador atualizado com sucesso!", "Administrador": admin_to_update}
+        return {"detail": True, "message": "Administrador atualizado com sucesso!", "Administrador": admin_to_update}
 
 # Atualiza alguns dados dos administradores por id
 @router.patch("/atualizar/{admin_id}")

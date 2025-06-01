@@ -220,7 +220,7 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
             session.commit()
             session.refresh(cliente)
             
-            return {"message": "Usuário cadastrado com sucesso! E-mail de confirmação enviado."}
+            return {"detail": True, "message": "Cliente cadastrado com sucesso!"}
         
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
