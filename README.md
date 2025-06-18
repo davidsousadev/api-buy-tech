@@ -102,6 +102,7 @@ api-buy-tech/
 
 ## Próximos passos
 
+* Ajustar logica critica dos carrinhos/ pedidos/ diminuição de produtos no pagamento atualmente diminui -1 inves da quantidade real ou melhor nem diminui. Além disso deve ser ajustada a logica para adicionar ao carrinho o codigo de compra, atualmente não está sento realizada a atualização.
 * Aplicar testes de carga e range em todas os end-points
 * Implementar paginação na nas listagens e rolagem infinita
   

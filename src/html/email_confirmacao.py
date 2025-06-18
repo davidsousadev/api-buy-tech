@@ -1,3 +1,7 @@
+from datetime import datetime
+
+anoAtual = datetime.now().strftime("%Y")
+
 def template_confirmacao(nome, url):
     return f'''<!DOCTYPE html>
 <html lang="pt-BR">
@@ -49,7 +53,7 @@ def template_confirmacao(nome, url):
 <body>
     <div class="email-container">
         <div class="email-header">
-            <span>Buy Tech</span>
+            <h1>Buy Tech</h1>
         </div>
         <div class="email-body">
             <h1>Confirmação de Email</h1>
@@ -59,7 +63,7 @@ def template_confirmacao(nome, url):
             <p>Se você não solicitou esta ação, ignore este email.</p>
         </div>
         <div class="email-footer">
-            <p>&copy; 2024 Buy Tech. Todos os direitos reservados.</p>
+            <p>&copy; {anoAtual} Buy Tech. Todos os direitos reservados.</p>
         </div>
     </div>
 </body>

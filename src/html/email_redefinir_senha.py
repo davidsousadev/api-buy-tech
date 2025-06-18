@@ -49,7 +49,7 @@ def template_redefinir_senha(nome, password):
 <body>
     <div class="email-container">
         <div class="email-header">
-            <span>Buy Tech</span>
+            <h1>Buy Tech</h1>
         </div>
         <div class="email-body">
             <h1>Recuperar de Senha</h1>

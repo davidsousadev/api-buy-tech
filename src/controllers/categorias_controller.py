@@ -51,7 +51,7 @@ def listar_categorias_por_id(categoria_id: int):
         return categoria
 
 # Cadastrar categorias
-@router.post("", response_model=BaseCategoria)
+@router.post("", response_model=BaseCategoria, status_code=status.HTTP_201_CREATED)
 def cadastrar_categorias(categoria_data: BaseCategoria, admin: Annotated[Admin, Depends(get_logged_admin)],
 ):
     if not admin.admin:

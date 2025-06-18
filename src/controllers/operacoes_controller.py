@@ -165,6 +165,7 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
               "cupom_de_desconto_data": (data[5]),
               "pontos_resgatados": (data[6])
         }
+        
         if codigo_de_confirmacao_token["idcliente"]!=cliente.id:
             raise HTTPException(
                 status_code=status.HTTP_200_OK,
