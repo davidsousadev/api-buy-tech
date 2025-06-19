@@ -102,7 +102,6 @@ api-buy-tech/
 
 ## Próximos passos
 
-* Ajustar logica critica dos carrinhos/ pedidos/ diminuição de produtos no pagamento atualmente diminui -1 inves da quantidade real ou melhor nem diminui. Além disso deve ser ajustada a logica para adicionar ao carrinho o codigo de compra, atualmente não está sento realizada a atualização.
 * Aplicar testes de carga e range em todas os end-points
 * Implementar paginação na nas listagens e rolagem infinita
   
@@ -135,6 +134,6 @@ api-buy-tech/
 * Carrinhos Revendedor: Listar Carrinho, Cadastrar Item Carrinho, Listar Carrinhos Admin e Atualizar Item No Carrinho Por Id
 * Pedidos Revendedor: Listar Pedidos, Cadastrar Pedido Revendedor, Listar Pedidos Admin, Listar Pedidos Por Id, Cancelar Pedido Por Id e Cancelar Pedido Por Id Admin
 * Operações Revendedor: Saldo Dos Revendedores, Extrato Dos Revendedores, Créditos Dos Revendedores, Débitos Dos Revendedores, Confirmar Pagamentos, Pendências Dos Revendedores, Listar Receitas, Listar Débitos e Listar Receitas
-
 * Refatorar a confirmação de email [Urgente]
 * Ajustar todos os retornos para no front não aparecer a conexão com a api / remoção de erros HTTP_4*
+* Ajustar logica critica dos carrinhos/ pedidos/ diminuição de produtos no pagamento atualmente diminui -1 inves da quantidade real ou melhor nem diminui. Além disso deve ser ajustada a logica para adicionar ao carrinho o codigo de compra, atualmente não está sento realizada a atualização.

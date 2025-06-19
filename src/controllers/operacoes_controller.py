@@ -12,6 +12,7 @@ from src.models.clientes_models import Cliente
 from src.models.operacoes_models import Operacao
 from src.models.pedidos_models import Pedido
 from src.models.carrinhos_models import Carrinho
+from src.models.produtos_models import Produto
 from src.models.admins_models import Admin
 from src.models.cupons_models import Cupom
 
@@ -194,24 +195,20 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
                 raise HTTPException(
                     status_code=status.HTTP_200_OK,
                     detail="Pagamento não realizado, pontos fidelidade insuficientes!"
-                    )   
-            statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["cupom_de_desconto_data"])
-            cupom = session.exec(statement).first()
-            if cupom:
-                cupom.resgatado = True
-                cupom.quantidade_de_ultilizacao -= 1
-
-                # Salvar as alterações no banco de dados
-                session.add(cupom)
-                session.commit()
-                session.refresh(cupom)
-
+                    ) 
+            
             statement = select(Pedido).where(Pedido.cliente == cliente.id,
                                              Pedido.status == True,
                                              func.length(Pedido.codigo) > 6
                                              )
             
             pedido = session.exec(statement).first()
+
+            if not pedido:
+                raise HTTPException(
+                    status_code=status.HTTP_200_OK, 
+                    detail='Pedido invalido!')
+
             if pedido and len(pedido.codigo) > 6 and pedido.codigo !="" and pedido.status==True:
                 # Encontrou, então verifica o codigo de confirmação
                 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -224,28 +221,57 @@ async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(g
 
                 pedido.codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
 
-                produtos_ids = eval(pedido.produtos)  
+                carrinhos_ids = eval(pedido.carrinhos)  
 
-                if isinstance(produtos_ids, list):
-                    produtos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id,
+                if isinstance(carrinhos_ids, list):
+                    carrinhos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id,
                                                             Carrinho.status == True,
-                                                            func.length(Carrinho.codigo) >= 6)
-                    produtos = session.exec(produtos_query).all()
+                                                            Carrinho.id.in_(carrinhos_ids))
+                    carrinhos = session.exec(carrinhos_query).all()
 
-                    for produto in produtos:
-                        if produto.quantidade > 1:
-                            produto.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
-                            produto.quantidade -= 1
+                    for carrinho in carrinhos:
+                        
+                        if carrinho.quantidade >= 1:
+                            
+                            produto_query = select(Produto).where(Produto.id == carrinho.produto_codigo)
+                            produto = session.exec(produto_query).first()
+                            if produto.quantidade_estoque >= carrinho.quantidade:
+                                carrinho.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
+                                produto.quantidade_estoque -= carrinho.quantidade
+                                session.add(produto)
+                                session.commit()
+                                session.refresh(produto)
+                            else:
+                                
+                                raise HTTPException(
+                                    status_code=status.HTTP_200_OK, 
+                                    detail='Produto no pedido sem estoque!')
                         else: 
+                            
                             raise HTTPException(
                                 status_code=status.HTTP_200_OK, 
                                 detail='Produto no pedido sem estoque!')
-                        session.add(produto)
+                        session.add(carrinho)
 
                 # Salvar as alterações no banco de dados
                 session.add(pedido)
                 session.commit()
                 session.refresh(pedido)
+
+
+
+            statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["cupom_de_desconto_data"])
+            cupom = session.exec(statement).first()
+            if cupom:
+                cupom.resgatado = True
+                cupom.quantidade_de_ultilizacao -= 1
+
+                # Salvar as alterações no banco de dados
+                session.add(cupom)
+                session.commit()
+                session.refresh(cupom)
+
+
             
             # Realiza as apoerações    
             # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)

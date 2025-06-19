@@ -23,7 +23,7 @@ def template_redefinir_senha(nome, password):
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }}
         .email-header {{
-            background-color: #0066cc;
+            background-color: #004AAD;
             color: #ffffff;
             padding: 20px;
             text-align: center;

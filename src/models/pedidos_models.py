@@ -15,7 +15,7 @@ class BasePedido(SQLModel):
 class Pedido(BasePedido, table=True):
     id: int = Field(default=None, primary_key=True)
     criacao: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
-    produtos: str = Field(default="[]", sa_column=JSON)
+    carrinhos: str = Field(default="[]", sa_column=JSON)# Lista de Carrinhos
     status: bool = Field(default=True) # Se esperando pagamento ou cancelada
     pontos_fidelidade_resgatados: int
     total: float

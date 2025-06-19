@@ -38,7 +38,7 @@ def template_pedido_realizado(nome, numero_pedido, url, itens_carrinho, frete, o
     <style>
         body {{ font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; }}
         .email-container {{ max-width: 600px; margin: auto; background-color: #fff; border-radius: 8px; padding: 20px; }}
-        .email-header {{ background-color: #4CAF50; color: #fff; padding: 20px; text-align: center; }}
+        .email-header {{ background-color: #004AAD; color: #fff; padding: 20px; text-align: center; }}
         table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
         th, td {{ border: 1px solid #ddd; padding: 10px; text-align: left; }}
     </style>

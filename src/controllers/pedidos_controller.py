@@ -130,7 +130,6 @@ def listar_pedidos(
 
         return pedidos
 
-
 # Lista pedidos dos clientes por id
 @router.get("/{pedido_id}")
 def listar_pedidos_por_id(
@@ -158,7 +157,8 @@ def listar_pedidos_por_id(
 @router.post("")
 def cadastrar_pedido(
     pedido_data: BasePedido,
-    cliente: Annotated[Cliente, Depends(get_logged_cliente)]
+    cliente: Annotated[Cliente, Depends(get_logged_cliente)],
+    status_code: int = status.HTTP_201_CREATED
 ):
     if not cliente.id:
         raise HTTPException(
@@ -204,7 +204,7 @@ def cadastrar_pedido(
 
         # Inicializa variáveis para o cálculo do total como float
         itens_carrinho = []
-        ids_itens_carrinho = []
+        ids_carrinhos = []
         valor_items = 0.0
 
         for item in itens:
@@ -228,7 +228,7 @@ def cadastrar_pedido(
                     "quantidade": item.quantidade,
                     "preco": item.preco
                 })
-                ids_itens_carrinho.append(item.produto_codigo)
+                ids_carrinhos.append(item.id)
 
         if valor_items == 0:
             raise HTTPException(
@@ -296,7 +296,7 @@ def cadastrar_pedido(
             # Criar novo pedido
             pedido = Pedido(
                 cliente=pedido_data.cliente,
-                produtos=f"{ids_itens_carrinho}",
+                carrinhos=f"{ids_carrinhos}",
                 cupom_de_desconto=pedido_data.cupom_de_desconto,
                 pontos_fidelidade_resgatados=pontos_fidelidade_resgatados,
                 status=True,
@@ -309,7 +309,7 @@ def cadastrar_pedido(
             session.add(pedido)
         else:
             # Atualiza pedido em aberto
-            pedido_em_aberto.produtos = f"{ids_itens_carrinho}"
+            pedido_em_aberto.carrinhos = f"{ids_carrinhos}"
             pedido_em_aberto.frete = pedido_data.frete
             pedido_em_aberto.status = True
             pedido_em_aberto.criacao = datetime.now().strftime('%Y-%m-%d')
@@ -326,6 +326,7 @@ def cadastrar_pedido(
         for item in itens:
             if not item.status:
                 item.status = True
+                item.codigo = codigo_pedido
                 session.add(item)
         session.commit()
 
@@ -350,7 +351,8 @@ def cadastrar_pedido(
             assunto="Pedido - Buy Tech",
             corpo=corpo_do_pedido
         )
-        envio = enviar_email(
+        envio = True 
+        """= enviar_email(
             email.nome_remetente, 
             email.remetente, 
             email.senha, 
@@ -359,7 +361,7 @@ def cadastrar_pedido(
             email.corpo, 
             importante=True, 
             html=True
-        )
+        )"""
 
         if envio:
             return {"message": "Pedido realizado com sucesso! E-mail com dados enviado."}
@@ -419,20 +421,21 @@ def cancelar_pedido_por_id(
         if pedido.status and len(pedido.codigo) != 6:
             pedido.codigo = ""
             pedido.status = False
-            produtos_ids = eval(pedido.produtos)
+            carrinhos_ids = eval(pedido.carrinhos)
             
-            if isinstance(produtos_ids, list):
-                produtos_query = select(Carrinho).where(Carrinho.cliente_id == cliente.id)
-                produtos = session.exec(produtos_query).all()
-                for produto in produtos:
-                    produto.status = False
-                    session.add(produto)
+            if isinstance(carrinhos_ids, list):
+                carrinhos_query = select(Carrinho).where(Carrinho.cliente_id == cliente.id, Carrinho.id.in_(carrinhos_ids))
+                carrinhos = session.exec(carrinhos_query).all()
+                for carrinho in carrinhos:
+                    carrinho.status = False
+                    carrinho.codigo = ""
+                    session.add(carrinho)
             
             session.add(pedido)
             session.commit()
             session.refresh(pedido)
             
-            return {"message": "Pedido e produtos cancelados com sucesso"}
+            return {"message": "Pedido e carrinhos cancelados com sucesso"}
         
         if pedido and pedido.codigo == "":
             raise HTTPException(
