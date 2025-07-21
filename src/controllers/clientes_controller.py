@@ -276,7 +276,7 @@ def autenticar_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)]
   return cliente
 
 # Atualiza clientes
-@router.patch("")
+@router.patch("", status_code=status.HTTP_200_OK)
 def atualizar_clientes_por(
     cliente_data: UpdateClienteRequest, 
     cliente: Annotated[Cliente, Depends(get_logged_cliente)]):

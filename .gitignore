@@ -8,3 +8,17 @@ trash*/*
 *.db
 .pytest_cache
 buy-tech.db
+.hypothesis
+*.hypothesis
+*.sqlite3
+*.sqlite
+*.log
+*.coverage
+.coverage.*
+*.egg-info
+dist
+build
+.eggs
+*.egg
+*.whl
+*.pyo

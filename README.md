@@ -105,7 +105,7 @@ api-buy-tech/
 * Aplicar testes de carga e range em todas os end-points
 * Implementar paginação na nas listagens e rolagem infinita
   
-* Aplicar condicoes especiais aos revendedores(como descontos para compra em quantidade...)
+* Aplicar condições especiais aos revendedores(como descontos para compra em quantidade...)
 * Fluxo dos pedidos (Carrinho, pedido, pagamento, envio, recebimento)
 * Ajustar revendedores na rotas de clientes e admins, implementar funcionalidades especiais a eles
 * Calcular o frete e aplicar clube fidelidade para quem comprou 5 vezes no mes
@@ -118,6 +118,7 @@ api-buy-tech/
 * Implementar a logica de cadastro de revendedores e o cadastro de pessoas juridicas
 * Gerar todas as rotas de relatórios disponibilizando tanto para os clientes quanto para os administradores/revendedores
 * Adicionar relação de comentarios, classificação dos produtos
+* 🚩 Adicionar logica de banners
 
 ## Passos Realizados
 
@@ -137,3 +138,8 @@ api-buy-tech/
 * Refatorar a confirmação de email [Urgente]
 * Ajustar todos os retornos para no front não aparecer a conexão com a api / remoção de erros HTTP_4*
 * Ajustar logica critica dos carrinhos/ pedidos/ diminuição de produtos no pagamento atualmente diminui -1 inves da quantidade real ou melhor nem diminui. Além disso deve ser ajustada a logica para adicionar ao carrinho o codigo de compra, atualmente não está sento realizada a atualização.
+* Adição de atualização nos componentes de pedido personalizados
+
+---
+
+🤝 Contribuições e ajuda no desenvolvimento são sempre bem-vindas! Sinta-se à vontade para abrir issues ou pull requests.

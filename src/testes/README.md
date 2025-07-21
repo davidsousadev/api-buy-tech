@@ -2,4 +2,5 @@
 
 ´´´sh
     cd src/pytest && pytest
+    pytest -v
 ´´´

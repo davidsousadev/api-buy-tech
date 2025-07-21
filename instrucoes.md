@@ -37,6 +37,8 @@
 
 ```sh
     fastapi dev src/main.py
+    fastapi run src/main.py --reload
+
 ```
 
 ##### Em um único comando
