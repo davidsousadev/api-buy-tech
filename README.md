@@ -119,6 +119,7 @@ api-buy-tech/
 * Gerar todas as rotas de relatórios disponibilizando tanto para os clientes quanto para os administradores/revendedores
 * Adicionar relação de comentarios, classificação dos produtos
 * 🚩 Adicionar logica de banners
+* 🫵 Adicionar regras para indicações, as regras estão comentadas em buy-tech -> indicacoes.html
 
 ## Passos Realizados
 

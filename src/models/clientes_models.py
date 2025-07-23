@@ -24,7 +24,7 @@ class SignUpClienteRequest(BaseCliente):
 class ClienteData(BaseCliente):
   pontos_fidelidade: int
   clube_fidelidade: bool
-  cod_indicacao: int
+  cod_indicacao: str
   status: bool
   admin: bool
   cpf: str      
@@ -49,7 +49,7 @@ class Cliente(IncludeCliente, table=True):
   criacao_de_conta: str = Field(default=datetime.datetime.now().strftime('%Y-%m-%d'))
   pontos_fidelidade: float
   clube_fidelidade: bool
-  cod_indicacao: int
+  cod_indicacao: str
   cod_confirmacao_email: str
   status: bool
   admin: bool = Field(default=False) 
@@ -78,7 +78,7 @@ class ClienteResponse(BaseModel):
     criacao_de_conta: str
     pontos_fidelidade: float
     clube_fidelidade: bool
-    cod_indicacao: int
+    cod_indicacao: str
     status: bool
 
     class Config:

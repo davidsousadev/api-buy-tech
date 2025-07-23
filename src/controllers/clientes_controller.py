@@ -171,7 +171,7 @@ async def cadastrar_clientes(cliente_data: SignUpClienteRequest, ref: int | None
             if cliente_referenciado:
                 link = ref
         else:
-            link = 0
+            link = ""
 
         # Criação do usuário
         cliente = Cliente(

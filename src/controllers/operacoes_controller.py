@@ -146,232 +146,197 @@ def debitos_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged_cliente)
 # Operação de confirmar os pagamentos e fazer as determinadas operacoes
 @router.get("/pagamentos/{token}")
 async def confirmar_pagamentos(token: str, cliente: Annotated[Cliente, Depends(get_logged_cliente)]):
-    
     if not cliente:
         raise HTTPException(
             status_code=status.HTTP_200_OK,
             detail="Acesso negado!"
         )
     
-    # Valida o token
     codigo_de_confirmacao = await verifica_pagamento(token)
     data = codigo_de_confirmacao.split('-')
-    if data:
-        codigo_de_confirmacao_token = {
-              "loja": data[0],
-              "idcliente": int(data[1]),
-              "valor": float(data[2]),
-              "opcao_de_pagamento": bool(data[3]),
-              "codigo_de_confirmacao": (data[4]),
-              "cupom_de_desconto_data": (data[5]),
-              "pontos_resgatados": (data[6])
-        }
-        
-        if codigo_de_confirmacao_token["idcliente"]!=cliente.id:
-            raise HTTPException(
-                status_code=status.HTTP_200_OK,
-                detail="Não e possivel pagar a conta de outro cliente!"
-            )
-        with Session(get_engine()) as session:
-            
+
+    if not data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido.")
+
+    codigo_de_confirmacao_token = {
+        "loja": data[0],
+        "idcliente": int(data[1]),
+        "valor": float(data[2]),
+        "opcao_de_pagamento": bool(data[3]),
+        "codigo_de_confirmacao": data[4],
+        "cupom_de_desconto_data": data[5],
+        "pontos_resgatados": data[6]
+    }
+
+    if codigo_de_confirmacao_token["idcliente"] != cliente.id:
+        raise HTTPException(
+            status_code=status.HTTP_200_OK,
+            detail="Não é possível pagar a conta de outro cliente!"
+        )
+
+    with Session(get_engine()) as session:
+        try:
             sttm = select(Cliente).where(Cliente.id == cliente.id)
             cliente_to_update = session.exec(sttm).first()
 
             if not cliente_to_update:
-                raise HTTPException(
-                    status_code=status.HTTP_200_OK,
-                    detail="Usuário não encontrado."
-                )
+                raise HTTPException(status_code=status.HTTP_200_OK, detail="Usuário não encontrado.")
 
             if cliente_to_update.cod_confirmacao_email != "Confirmado":
-                raise HTTPException(
-                    status_code=status.HTTP_200_OK, 
-                    detail="E-mail não confirmado!"
-                )
+                raise HTTPException(status_code=status.HTTP_200_OK, detail="E-mail não confirmado!")
+
+            # Realiza as operações    
+            # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)
+            # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
             # Retira do saldo
             if codigo_de_confirmacao_token["valor"] <= cliente_to_update.pontos_fidelidade:
                 cliente_to_update.pontos_fidelidade -= codigo_de_confirmacao_token["valor"]
-            else: 
-                raise HTTPException(
-                    status_code=status.HTTP_200_OK,
-                    detail="Pagamento não realizado, pontos fidelidade insuficientes!"
-                    ) 
-            
-            statement = select(Pedido).where(Pedido.cliente == cliente.id,
-                                             Pedido.status == True,
-                                             func.length(Pedido.codigo) > 6
-                                             )
-            
+            else:
+                raise HTTPException(status_code=status.HTTP_200_OK, detail="Pontos fidelidade insuficientes!")
+
+            # Buscar pedido válido
+            statement = select(Pedido).where(
+                Pedido.cliente == cliente.id,
+                Pedido.status == True,
+                func.length(Pedido.codigo) > 6
+            )
             pedido = session.exec(statement).first()
-
             if not pedido:
-                raise HTTPException(
-                    status_code=status.HTTP_200_OK, 
-                    detail='Pedido invalido!')
+                raise HTTPException(status_code=status.HTTP_200_OK, detail='Pedido inválido!')
 
-            if pedido and len(pedido.codigo) > 6 and pedido.codigo !="" and pedido.status==True:
-                # Encontrou, então verifica o codigo de confirmação
-                pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            # Verifica código de confirmação
+            pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+            if not pwd_context.verify(codigo_de_confirmacao_token["codigo_de_confirmacao"], pedido.codigo):
+                raise HTTPException(status_code=status.HTTP_200_OK, detail='Código de confirmação inválido!')
 
-                is_correct = pwd_context.verify(codigo_de_confirmacao_token["codigo_de_confirmacao"], pedido.codigo)
-                if not is_correct:
-                  raise HTTPException(
-                    status_code=status.HTTP_200_OK, 
-                    detail='Codigo de confirmação invalido!')
+            pedido.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
 
-                pedido.codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
+            # Atualiza carrinhos e estoque
+            carrinhos_ids = eval(pedido.carrinhos)
+            if isinstance(carrinhos_ids, list):
+                carrinhos_query = select(Carrinho).where(
+                    Carrinho.cliente_id == cliente.id,
+                    Carrinho.status == True,
+                    Carrinho.id.in_(carrinhos_ids)
+                )
+                carrinhos = session.exec(carrinhos_query).all()
 
-                carrinhos_ids = eval(pedido.carrinhos)  
+                for carrinho in carrinhos:
+                    if carrinho.quantidade < 1:
+                        raise HTTPException(status_code=status.HTTP_200_OK, detail='Produto no pedido sem estoque!')
 
-                if isinstance(carrinhos_ids, list):
-                    carrinhos_query = select(Carrinho).where(Carrinho.cliente_id==cliente.id,
-                                                            Carrinho.status == True,
-                                                            Carrinho.id.in_(carrinhos_ids))
-                    carrinhos = session.exec(carrinhos_query).all()
+                    produto_query = select(Produto).where(Produto.id == carrinho.produto_codigo)
+                    produto = session.exec(produto_query).first()
 
-                    for carrinho in carrinhos:
-                        
-                        if carrinho.quantidade >= 1:
-                            
-                            produto_query = select(Produto).where(Produto.id == carrinho.produto_codigo)
-                            produto = session.exec(produto_query).first()
-                            if produto.quantidade_estoque >= carrinho.quantidade:
-                                carrinho.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
-                                produto.quantidade_estoque -= carrinho.quantidade
-                                session.add(produto)
-                                session.commit()
-                                session.refresh(produto)
-                            else:
-                                
-                                raise HTTPException(
-                                    status_code=status.HTTP_200_OK, 
-                                    detail='Produto no pedido sem estoque!')
-                        else: 
-                            
-                            raise HTTPException(
-                                status_code=status.HTTP_200_OK, 
-                                detail='Produto no pedido sem estoque!')
-                        session.add(carrinho)
+                    if not produto or produto.quantidade_estoque < carrinho.quantidade:
+                        raise HTTPException(status_code=status.HTTP_200_OK, detail='Produto no pedido sem estoque!')
 
-                # Salvar as alterações no banco de dados
-                session.add(pedido)
-                session.commit()
-                session.refresh(pedido)
+                    carrinho.codigo = codigo_de_confirmacao_token["codigo_de_confirmacao"]
+                    produto.quantidade_estoque -= carrinho.quantidade
 
+                    session.add(produto)
+                    session.add(carrinho)
 
+            session.add(pedido)
 
+            # Atualiza cupom
             statement = select(Cupom).where(Cupom.nome == codigo_de_confirmacao_token["cupom_de_desconto_data"])
             cupom = session.exec(statement).first()
             if cupom:
                 cupom.resgatado = True
                 cupom.quantidade_de_ultilizacao -= 1
-
-                # Salvar as alterações no banco de dados
                 session.add(cupom)
-                session.commit()
-                session.refresh(cupom)
-
-
             
-            # Realiza as apoerações    
+            # Realiza as operações    
             # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)
             # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
-            # Operação Referência
-            if cliente_to_update.cod_indicacao != 0:
-                sttm = select(Cliente).where(Cliente.id == cliente_to_update.cod_indicacao)
+            # # Operação de indicação
+            codigo = cliente_to_update.cod_indicacao
+            if not codigo.endswith("x"):
+                sttm = select(Cliente).where(Cliente.id == int(codigo))
                 cliente_de_indicacao = session.exec(sttm).first()
-                if cliente_de_indicacao:
-                    cliente_de_indicacao.pontos_fidelidade += 1
-                    cliente_to_update.pontos_fidelidade += 1
-                    
-                    # Verifica se o cliente de indicação já é do clube fidelidade
-                    cliente_to_update.clube_fidelidade = True
-                    # Salvar a indicacao
-                    session.add(cliente_de_indicacao)
-                    session.commit()
-                    session.refresh(cliente_de_indicacao)
-                    
-                    # Cria o operacao de indicacao
-                    operacao_indicacao = Operacao(
-                    cliente=cliente_de_indicacao.id,
-                    valor=1,
-                    motivo=1,
-                    tipo=1,
-                    codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
-                    )
-                    # Salvar a indicacao
-                    session.add(operacao_indicacao)
-                    session.commit()
-                    session.refresh(operacao_indicacao)
-            
-            # Operação pagamento
-            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"],       
-                                               Operacao.motivo==3,
-                                               Operacao.tipo==2)
-            operacao = session.exec(statement).first()
 
+                if cliente_de_indicacao:
+                    cliente_de_indicacao.pontos_fidelidade += 10
+                    cliente_to_update.pontos_fidelidade += 10
+                    cliente_to_update.cod_indicacao = f"{codigo}x"
+                    cliente_to_update.clube_fidelidade = True
+
+                    session.add(cliente_de_indicacao)
+                    session.add(cliente_to_update)
+
+                    operacao_indicacao = Operacao(
+                        cliente=cliente_de_indicacao.id,
+                        valor=1,
+                        motivo=1,
+                        tipo=1,
+                        codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
+                    )
+                    session.add(operacao_indicacao)
+
+            # Verifica se pagamento já foi feito
+            statement = select(Operacao).where(
+                Operacao.codigo == codigo_de_confirmacao_token["codigo_de_confirmacao"],
+                Operacao.motivo == 3,
+                Operacao.tipo == 2
+            )
+            operacao = session.exec(statement).first()
+            if operacao:
+                raise HTTPException(status_code=status.HTTP_200_OK, detail="Pagamento já foi realizado anteriormente!")
+
+            operacao_pagamento = Operacao(
+                cliente=codigo_de_confirmacao_token["idcliente"],
+                valor=codigo_de_confirmacao_token["valor"],
+                motivo=3,
+                tipo=2,
+                codigo=cliente.id
+            )
+            session.add(operacao_pagamento)
+
+            # Clube Fidelidade (grande compra)
+            if codigo_de_confirmacao_token["valor"] >= 5000:
+                if not cliente_to_update.clube_fidelidade:
+                    cliente_to_update.clube_fidelidade = True
+                    session.add(cliente_to_update)
+
+            # Realiza as operações    
+            # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)
+            # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
+            # Cashback
+            cashback = max(1, int(codigo_de_confirmacao_token["valor"] / 100))
+            cliente_to_update.pontos_fidelidade += cashback
+
+            statement = select(Operacao).where(
+                Operacao.codigo == codigo_de_confirmacao_token["codigo_de_confirmacao"],
+                Operacao.motivo == 2,
+                Operacao.tipo == 1
+            )
+            operacao = session.exec(statement).first()
             if operacao:
                 raise HTTPException(
                     status_code=status.HTTP_200_OK,
-                    detail="Pagamento já foi realizado anteriormente!"
-                    )
-            
-            if not operacao:
-               
-                # Cria o operacao pagamento
-                operacao_pagamento = Operacao(
-                    cliente=codigo_de_confirmacao_token["idcliente"],
-                    valor=codigo_de_confirmacao_token["valor"],
-                    motivo=3,
-                    tipo=2,
-                    codigo=cliente.id
+                    detail="Cashback já foi aplicado anteriormente!"
                 )
 
-                if codigo_de_confirmacao_token["valor"] >= 5000:
-                    # Verifica se o cliente de indicação já é do clube fidelidade
-                    if cliente_to_update.clube_fidelidade == False: 
-                        cliente_to_update.clube_fidelidade = True
-                        # Salvar a indicacao
-                        session.add(cliente_to_update)
-                        session.commit()
-                        session.refresh(cliente_to_update)
-
-                # Salvar as alterações no banco de dados
-                session.add(operacao_pagamento)
-                session.commit()
-                session.refresh(operacao_pagamento)
-            
-            # Operação caskback
-            cashback = int(codigo_de_confirmacao_token["valor"]/100)
-            if cashback>=1:
-                cliente_to_update.pontos_fidelidade += cashback  
-            else:
-                cliente_to_update.pontos_fidelidade += 1
-                cashback=1
-            # Cria o operacao de caskback
-            statement = select(Operacao).where(Operacao.codigo==codigo_de_confirmacao_token["codigo_de_confirmacao"], 
-                                               Operacao.motivo==2,
-                                               Operacao.tipo==1)
-            operacao = session.exec(statement).first()
-
-            if operacao:
-                raise HTTPException(
-                status_code=status.HTTP_200_OK,
-                detail="Caskback não pode ser aplicado pois ja foi aplicado anteriormente!"
+            operacao_cashback = Operacao(
+                cliente=cliente_to_update.id,
+                valor=cashback,
+                motivo=2,
+                tipo=1,
+                codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
             )
-            operacao_caskback = Operacao(
-            cliente=cliente_to_update.id,
-            valor=cashback,
-            motivo=2,
-            tipo=1,
-            codigo=codigo_de_confirmacao_token["codigo_de_confirmacao"]
-            )
-            # Salvar a indicacao
-            session.add(operacao_caskback)
+            session.add(operacao_cashback)
+
+            # Final commit de todas alterações
             session.commit()
-            session.refresh(operacao_caskback)
+            session.refresh(cliente_to_update)
+            session.refresh(cliente_de_indicacao)
 
-            return { "mensage": "Pagamento realizado com sucesso!" }
+            return {"mensage": "Pagamento realizado com sucesso!"}
+        
+        except Exception as e:
+            session.rollback()
+            raise HTTPException(status_code=500, detail=f"Erro interno: {str(e)}")
 
 # Operação de retornar as pendênçias           
 @router.get("/pendencias")
@@ -393,9 +358,10 @@ async def pendencias_dos_clientes(cliente: Annotated[Cliente, Depends(get_logged
         return pendencias
     
 # Operaçoes Admin
-# Realiza as apoerações    
+# Realiza as operações    
 # Creditos (Motivo: 1 Referência - 2 Cashback, Tipo: 1 Credito)
 # Debitos (Motivo: 3 Pagamento, Tipo: 2 Debito)
+
 # Lista receitas do Sistema
 @router.get("/receitas/admin")
 def listar_receitas(admin: Annotated[Admin, Depends(get_logged_admin)]):
